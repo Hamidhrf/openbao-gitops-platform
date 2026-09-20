@@ -1,0 +1,14 @@
+# Project CLIs (kind, kubectl, flux)
+.bin/
+
+# Never commit credentials or keys
+*.kubeconfig
+kubeconfig
+*.agekey
+keys.txt
+*.key
+openbao-init*
+
+# Local env files
+.env
+.env.*
