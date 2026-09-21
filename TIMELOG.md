@@ -6,3 +6,4 @@ Approximate working time per task, including reading docs and debugging.
 |---|---:|
 | Planning and environment prep | 7 h |
 | Bootstrap secret strategy (SOPS and age) | 3 h |
+| Tooling and local kind cluster | 2 h |

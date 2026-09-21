@@ -23,6 +23,7 @@ The machine I have for it is one Ubuntu 24.04 VM (16 vCPU, 61 GiB RAM). It alrea
 - 1 control-plane node and 3 workers. Workloads run only on the workers.
 - One replica per worker for each HA component (3 PostgreSQL instances, 3 OpenBao replicas). How this is enforced is decided per component.
 - Pod CIDR 10.200.0.0/16 and service CIDR 10.210.0.0/16, so there is no overlap with the existing cluster.
+- The kind Docker network got 172.18.0.0/16 and fc00:f853:ccd:e793::/64 when the cluster was created. It does not overlap with the other Docker networks or the VM network.
 - Separate kubeconfig (`~/.kube/openbao-local`) and project-local CLIs in `.bin/`, including kubectl v1.36.4. The host kubectl is 1.34, and kubectl only supports one minor version difference to the API server.
 
 Why 1.36 and not 1.37: Flux 2.9 supports Kubernetes up to 1.36.
