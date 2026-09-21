@@ -5,3 +5,4 @@ Approximate working time per task, including reading docs and debugging.
 | Task | Time |
 |---|---:|
 | Planning and environment prep | 7 h |
+| Bootstrap secret strategy (SOPS and age) | 3 h |

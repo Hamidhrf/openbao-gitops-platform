@@ -17,4 +17,5 @@ It will run on a local kind cluster with one control-plane node and three worker
 ## Docs
 
 - [ADR-001: Local runtime environment](docs/adr/001-runtime-environment.md)
+- [ADR-002: Bootstrap secrets](docs/adr/002-bootstrap-secrets.md)
 - [Time log](TIMELOG.md)
