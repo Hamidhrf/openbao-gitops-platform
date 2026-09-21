@@ -38,4 +38,5 @@ To remove the cluster:
 
 - [ADR-001: Local runtime environment](docs/adr/001-runtime-environment.md)
 - [ADR-002: Bootstrap secrets](docs/adr/002-bootstrap-secrets.md)
+- [ADR-003: Flux bootstrap](docs/adr/003-flux-bootstrap.md)
 - [Time log](TIMELOG.md)
