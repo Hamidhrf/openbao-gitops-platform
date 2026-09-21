@@ -13,6 +13,16 @@ It will run on a local kind cluster with one control-plane node and three worker
 | kind | v0.33.0 |
 | Kubernetes | v1.36.4 |
 | kubectl | v1.36.4 |
+| Flux CLI | v2.9.5 |
+| sops | v3.13.3 |
+| age | v1.3.2 |
+
+## Local tools
+
+    scripts/install-tools.sh
+    source scripts/env.sh
+
+`install-tools.sh` downloads the pinned CLIs into `.bin/` and checks their SHA-256 checksums. `env.sh` puts `.bin/` first on `PATH` and sets `KUBECONFIG` to `~/.kube/openbao-local`.
 
 ## Docs
 
