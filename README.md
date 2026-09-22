@@ -99,4 +99,5 @@ This returns 200. Without `--cacert`, curl rejects the self-signed certificate, 
 - [ADR-003: Flux bootstrap](docs/adr/003-flux-bootstrap.md)
 - [ADR-004: PostgreSQL operator](docs/adr/004-postgresql-operator.md)
 - [ADR-005: Backup target](docs/adr/005-backup-target.md)
+- [ADR-006: Repository layout and namespaces](docs/adr/006-repo-layout-and-namespaces.md)
 - [Time log](TIMELOG.md)
