@@ -70,4 +70,5 @@ Check:
 - [ADR-002: Bootstrap secrets](docs/adr/002-bootstrap-secrets.md)
 - [ADR-003: Flux bootstrap](docs/adr/003-flux-bootstrap.md)
 - [ADR-004: PostgreSQL operator](docs/adr/004-postgresql-operator.md)
+- [ADR-005: Backup target](docs/adr/005-backup-target.md)
 - [Time log](TIMELOG.md)

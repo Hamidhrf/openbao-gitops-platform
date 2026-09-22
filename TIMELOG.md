@@ -9,3 +9,5 @@ Approximate working time per task, including reading docs and debugging.
 | Tooling and local kind cluster | 2 h |
 | Flux bootstrap (decision and setup) | 3 h |
 | ESO spike | 4 h |
+| PostgreSQL operator decision (ADR-004) | 3 h |
+| Backup target decision and backup-store spike (ADR-005) | 4 h |
