@@ -11,3 +11,4 @@ Approximate working time per task, including reading docs and debugging.
 | ESO spike | 4 h |
 | PostgreSQL operator decision (ADR-004) | 3 h |
 | Backup target decision and backup-store spike (ADR-005) | 4 h |
+| Backup store (SOPS rule, credential and start script) | 1.5 h |

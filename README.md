@@ -1,6 +1,6 @@
 # openbao-gitops-platform
 
-Work in progress. The local cluster runs Flux; nothing else is deployed yet.
+Work in progress. The local cluster runs Flux, and the backup store runs on the VM; nothing else is deployed yet.
 
 Goal: OpenBao in HA mode with an HA PostgreSQL backend, deployed with Flux, and External Secrets Operator syncing secrets between OpenBao and Kubernetes in both directions.
 
@@ -16,6 +16,7 @@ It will run on a local kind cluster with one control-plane node and three worker
 | Flux CLI | v2.9.5 |
 | sops | v3.13.3 |
 | age | v1.3.2 |
+| Versity S3 Gateway | v1.8.0 |
 
 ## Local tools
 
@@ -63,6 +64,33 @@ Check:
 
     flux check --context kind-openbao-local
     flux get all -A --context kind-openbao-local
+
+## Backup store
+
+PostgreSQL backups go to a Versity S3 Gateway container on the VM, outside kind (see ADR-005). Flux does not manage it. `scripts/backup-store.sh` starts it and can be run again.
+
+The store credential is created once and committed encrypted with SOPS. The random values go straight into `sops`, so no plaintext file is written:
+
+    test ! -e scripts/backup-store.sops.env && (
+      umask 077
+      printf 'ROOT_ACCESS_KEY_ID=%s\nROOT_SECRET_ACCESS_KEY=%s\n' \
+        "$(/usr/bin/openssl rand -hex 10)" "$(/usr/bin/openssl rand -hex 20)" \
+      | .bin/sops encrypt --filename-override scripts/backup-store.sops.env \
+          --output scripts/backup-store.sops.env
+    )
+
+Start:
+
+    scripts/backup-store.sh
+
+The script stops if the kind network gateway is not `172.18.0.1`, if less than 40 GB is free, or if port 9000 is taken before the first start. On the first run it creates `~/backup-store/` (mode 700) with `objects/` for the backups and `tls/` for a self-signed certificate (IP SAN `172.18.0.1`, valid for 365 days). The container runs as the calling user with all capabilities dropped, a read-only root filesystem, `no-new-privileges` and restart policy `unless-stopped`. Port 9000 is published only on the kind gateway. `sops exec-env` decrypts the credential only for the step that starts the container and creates the bucket `pg-backups`.
+
+Check:
+
+    curl -s -o /dev/null -w '%{http_code}\n' \
+      --cacert ~/backup-store/tls/server.crt https://172.18.0.1:9000/health
+
+This returns 200. Without `--cacert`, curl rejects the self-signed certificate, and the VM's LAN address does not answer on port 9000.
 
 ## Docs
 
