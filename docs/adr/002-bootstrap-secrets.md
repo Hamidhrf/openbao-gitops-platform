@@ -23,6 +23,7 @@ SOPS with age, decrypted by the Flux kustomize-controller.
 - Standard age recipients, not post-quantum ones. Flux 2.9 supports the post-quantum cipher, but this project has no such requirement and standard recipients are shorter and easier to read.
 - Two recipients. The working identity is installed in the cluster as a Secret in `flux-system`. The break-glass identity is stored in my password manager, outside the VM, and is never installed in the cluster, so the encrypted files can still be opened if the working key is lost.
 - Encrypted files are named `*.sops.yaml`. The rules are in `.sops.yaml` at the repository root.
+- Secrets used on the VM outside Kubernetes are dotenv files named `*.sops.env`, with all values encrypted for the same two recipients (added 2026-09-22). `sops exec-env` passes them to a command as environment variables, so no plaintext file is written. The first is the backup-store credential (ADR-005).
 - The working private key is at `~/.config/sops/age/keys.txt` on the VM, mode 600. No private key is in the repository.
 - The Secret holding the working key is created once, during Flux bootstrap:
 

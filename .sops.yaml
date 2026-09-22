@@ -6,3 +6,6 @@ creation_rules:
   - path_regex: \.sops\.yaml$
     encrypted_regex: ^(data|stringData)$
     age: age1hyt4450vl74xy5nlf585jm53lrxhapqy8rn9tm7w922rnmf6uevsj0llcl,age1hwv2gk7peqx7lr7q08pvd3ec5djs3n57mrswf9maexy4puay53msy7395t
+  # dotenv files used on the VM outside Kubernetes; all values encrypted
+  - path_regex: \.sops\.env$
+    age: age1hyt4450vl74xy5nlf585jm53lrxhapqy8rn9tm7w922rnmf6uevsj0llcl,age1hwv2gk7peqx7lr7q08pvd3ec5djs3n57mrswf9maexy4puay53msy7395t
