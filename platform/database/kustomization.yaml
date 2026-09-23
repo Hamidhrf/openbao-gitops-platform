@@ -8,3 +8,5 @@ resources:
   - openbao-db-credential.sops.yaml
   - cluster.yaml
   - scheduled-backup.yaml
+  - restore-full.yaml
+  - restore-pitr.yaml
