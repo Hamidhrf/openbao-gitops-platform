@@ -1,6 +1,6 @@
 # ADR-004: PostgreSQL operator
 
-+Status: accepted (2026-09-22). The TLS line is amended by ADR-007.
+Status: accepted (2026-09-22). The TLS line is amended by ADR-007.
 
 ## Context
 
