@@ -1,0 +1,24 @@
+apiVersion: barmancloud.cnpg.io/v1
+kind: ObjectStore
+metadata:
+  name: backup-store
+  namespace: database
+spec:
+  retentionPolicy: "7d"
+  configuration:
+    destinationPath: s3://pg-backups/
+    endpointURL: https://172.18.0.1:9000
+    endpointCA:
+      name: backup-store-ca
+      key: ca.crt
+    s3Credentials:
+      accessKeyId:
+        name: backup-store-credential
+        key: ACCESS_KEY_ID
+      secretAccessKey:
+        name: backup-store-credential
+        key: ACCESS_SECRET_KEY
+    data:
+      compression: gzip
+    wal:
+      compression: gzip
