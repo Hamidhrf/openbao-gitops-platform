@@ -71,7 +71,7 @@ Check:
 
 ## Repository layout
 
-`clusters/local/` holds one Flux Kustomization per file, next to the generated `flux-system` directory. `infrastructure/controllers/` holds the operators, `platform/` the services this repository delivers, and `apps/` the workloads that consume them. Each Kustomization depends on the previous one and waits for it, which is what registers CRDs before the resources that use them (see ADR-006):
+`clusters/local/` holds one Flux Kustomization per file, next to the generated `flux-system` directory. `infrastructure/controllers/` holds the operators, `infrastructure/configs/` the cluster-wide configuration they consume, `platform/` the services this repository delivers, and `apps/` the workloads that consume them. Each Kustomization depends on the previous one and waits for it, which is what registers CRDs before the resources that use them (see ADR-006):
 
     infra-controllers -> infra-configs -> database -> openbao -> apps
 
@@ -122,6 +122,19 @@ Check:
 
 Backup and restore procedures are in [Backup and restore](docs/backup-restore.md).
 
+### TLS
+
+The PostgreSQL server certificate is issued by cert-manager from the platform CA (see ADR-007). A self-signed `ClusterIssuer` creates the root certificate `platform-ca` in the `cert-manager` namespace, and a CA `ClusterIssuer` signs with it. The `database` namespace holds a `Certificate` whose Secret the cluster references as both `serverTLSSecret` and `serverCASecret`, labelled `cnpg.io/reload` so the instances pick up a renewed certificate without a restart. CloudNativePG keeps its own CA for the client and replication certificates, so the database has two trust domains. The same platform CA issues OpenBao's listener certificate, which is how OpenBao obtains the CA it needs to verify PostgreSQL with `sslmode=verify-full`.
+
+Switching the running cluster from the operator's certificates to these was a reload: the instance pods kept their UIDs and restart counts and the cluster never left the Ready condition.
+
+Check:
+
+    kubectl --context kind-openbao-local get certificate -A
+    kubectl --context kind-openbao-local get cluster openbao-db -n database -o jsonpath='{.status.certificates}{"\n"}'
+
+A client inside the cluster connecting to `openbao-db-rw.database.svc` with `sslmode=verify-full` and this CA completes the handshake and is refused only at authentication. Connecting to the same server by IP address is refused, because the certificate carries no IP address.
+
 ### Failover
 
 Observed on 23 September 2026 on this cluster.
@@ -142,5 +155,6 @@ All nodes are containers on one VM, so a node failure here is a container failur
 - [ADR-004: PostgreSQL operator](docs/adr/004-postgresql-operator.md)
 - [ADR-005: Backup target](docs/adr/005-backup-target.md)
 - [ADR-006: Repository layout and namespaces](docs/adr/006-repo-layout-and-namespaces.md)
+- [ADR-007: TLS and the certificate authority](docs/adr/007-tls-and-ca.md)
 - [Backup and restore](docs/backup-restore.md)
 - [Time log](TIMELOG.md)
