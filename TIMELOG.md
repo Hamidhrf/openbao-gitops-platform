@@ -13,3 +13,4 @@ Approximate working time per task, including reading docs and debugging.
 | Backup target decision and backup-store spike (ADR-005) | 4 h |
 | Backup store (SOPS rule, credential and start script) | 1.5 h |
 | Repo layout and namespaces (ADR-006) | 2 h |
+| PostgreSQL deployment, backups and failure tests | 4 h |

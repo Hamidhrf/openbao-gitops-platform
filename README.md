@@ -1,10 +1,10 @@
 # openbao-gitops-platform
 
-Work in progress. The local cluster runs Flux, and the backup store runs on the VM; nothing else is deployed yet.
+Work in progress. The local cluster runs Flux, cert-manager, CloudNativePG and a three-instance PostgreSQL cluster backed up to the VM's backup store. OpenBao and External Secrets Operator are not deployed yet.
 
 Goal: OpenBao in HA mode with an HA PostgreSQL backend, deployed with Flux, and External Secrets Operator syncing secrets between OpenBao and Kubernetes in both directions.
 
-It will run on a local kind cluster with one control-plane node and three workers.
+It runs on a local kind cluster with one control-plane node and three workers.
 
 ## Versions
 
@@ -17,6 +17,10 @@ It will run on a local kind cluster with one control-plane node and three worker
 | sops | v3.13.3 |
 | age | v1.3.2 |
 | Versity S3 Gateway | v1.8.0 |
+| cert-manager | v1.21.2 |
+| CloudNativePG | v1.30.0 |
+| Barman Cloud Plugin | v0.15.0 |
+| PostgreSQL | 18.6 |
 
 ## Local tools
 
@@ -65,6 +69,16 @@ Check:
     flux check --context kind-openbao-local
     flux get all -A --context kind-openbao-local
 
+## Repository layout
+
+`clusters/local/` holds one Flux Kustomization per file, next to the generated `flux-system` directory. `infrastructure/controllers/` holds the operators, `platform/` the services this repository delivers, and `apps/` the workloads that consume them. Each Kustomization depends on the previous one and waits for it, which is what registers CRDs before the resources that use them (see ADR-006):
+
+    infra-controllers -> infra-configs -> database -> openbao -> apps
+
+Kustomizations are added as their directories gain content. Namespaces, chart sources and HelmReleases for a component live together in that component's namespace.
+
+    flux get kustomizations --context kind-openbao-local
+
 ## Backup store
 
 PostgreSQL backups go to a Versity S3 Gateway container on the VM, outside kind (see ADR-005). Flux does not manage it. `scripts/backup-store.sh` starts it and can be run again.
@@ -92,6 +106,34 @@ Check:
 
 This returns 200. Without `--cacert`, curl rejects the self-signed certificate, and the VM's LAN address does not answer on port 9000.
 
+## Database
+
+PostgreSQL runs as the CloudNativePG cluster `openbao-db` in the `database` namespace (see ADR-004). cert-manager, the CloudNativePG operator and the Barman Cloud Plugin come from the `infra-controllers` Kustomization. The cluster, its `ObjectStore` and the daily `ScheduledBackup` come from `database`, which depends on it.
+
+Three instances run one per worker, enforced with required pod anti-affinity on `kubernetes.io/hostname`. Synchronous replication uses `method: any` with one required acknowledgement and `dataDurability: required`, and `failoverQuorum` adds a quorum check before any promotion. The operand image is pinned by digest. Resource requests equal limits, so the instances get Guaranteed quality of service.
+
+The database credential is a SOPS-encrypted Secret in Git, used by the operator when the cluster is created. Backup store credentials and the store's CA certificate live in the same namespace, because the `ObjectStore` is resolved there.
+
+Check:
+
+    kubectl --context kind-openbao-local get cluster -n database
+    kubectl --context kind-openbao-local get pods -n database -o wide
+    kubectl --context kind-openbao-local get cluster openbao-db -n database -o jsonpath='{range .status.conditions[*]}{.type}={.status} {end}{"\n"}'
+
+Backup and restore procedures are in [Backup and restore](docs/backup-restore.md).
+
+### Failover
+
+Observed on 23 September 2026 on this cluster.
+
+Deleting the primary pod promoted a standby about one second later, and the deleted instance rejoined as a standby.
+
+Stopping the worker that ran the primary took longer. The node was marked NotReady after 46 seconds, the pod was marked for deletion five minutes after that by the default toleration for `node.kubernetes.io/unreachable`, and promotion followed within a second. On a node failure the recovery time is dominated by that Kubernetes default rather than by the operator, and it can be shortened with a shorter toleration on the instance pods.
+
+Stopping two of three workers left one reachable instance out of two candidate standbys. The operator refused to promote it and logged a failed strong consistency check, because it cannot establish that the survivor holds every acknowledged commit. Writes stopped rather than risking their loss. The cluster returned to three healthy instances on its own once the workers came back, with no manual promotion. `kubectl cnpg promote` exists for the case where availability matters more than possible data loss, and it stays a deliberate human decision.
+
+All nodes are containers on one VM, so a node failure here is a container failure rather than a host or zone failure. Instance volumes are node-local, so an instance on a stopped node cannot be rescheduled elsewhere and returns only when that node does.
+
 ## Docs
 
 - [ADR-001: Local runtime environment](docs/adr/001-runtime-environment.md)
@@ -100,4 +142,5 @@ This returns 200. Without `--cacert`, curl rejects the self-signed certificate, 
 - [ADR-004: PostgreSQL operator](docs/adr/004-postgresql-operator.md)
 - [ADR-005: Backup target](docs/adr/005-backup-target.md)
 - [ADR-006: Repository layout and namespaces](docs/adr/006-repo-layout-and-namespaces.md)
+- [Backup and restore](docs/backup-restore.md)
 - [Time log](TIMELOG.md)
