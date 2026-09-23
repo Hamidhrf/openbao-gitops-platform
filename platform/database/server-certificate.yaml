@@ -1,0 +1,38 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: openbao-db-server-tls
+  namespace: database
+spec:
+  secretName: openbao-db-server-tls
+  secretTemplate:
+    labels:
+      cnpg.io/reload: ""
+  commonName: openbao-db-rw
+  dnsNames:
+    - openbao-db-rw
+    - openbao-db-rw.database
+    - openbao-db-rw.database.svc
+    - openbao-db-rw.database.svc.cluster.local
+    - openbao-db-r
+    - openbao-db-r.database
+    - openbao-db-r.database.svc
+    - openbao-db-r.database.svc.cluster.local
+    - openbao-db-ro
+    - openbao-db-ro.database
+    - openbao-db-ro.database.svc
+    - openbao-db-ro.database.svc.cluster.local
+  usages:
+    - digital signature
+    - key encipherment
+    - server auth
+  duration: 2160h
+  renewBeforePercentage: 33
+  privateKey:
+    algorithm: RSA
+    size: 2048
+    rotationPolicy: Always
+  issuerRef:
+    name: platform-ca
+    kind: ClusterIssuer
+    group: cert-manager.io

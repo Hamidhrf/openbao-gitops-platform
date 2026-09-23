@@ -6,5 +6,6 @@ resources:
   - backup-store-credential.sops.yaml
   - objectstore.yaml
   - openbao-db-credential.sops.yaml
+  - server-certificate.yaml
   - cluster.yaml
   - scheduled-backup.yaml
