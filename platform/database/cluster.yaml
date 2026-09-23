@@ -19,6 +19,9 @@ spec:
     enablePodAntiAffinity: true
     podAntiAffinityType: required
     topologyKey: kubernetes.io/hostname
+  certificates:
+    serverTLSSecret: openbao-db-server-tls
+    serverCASecret: openbao-db-server-tls
   postgresql:
     synchronous:
       method: any

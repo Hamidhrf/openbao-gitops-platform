@@ -14,3 +14,4 @@ Approximate working time per task, including reading docs and debugging.
 | Backup store (SOPS rule, credential and start script) | 1.5 h |
 | Repo layout and namespaces (ADR-006) | 2 h |
 | PostgreSQL deployment, backups and failure tests | 4 h |
+| TLS and the certificate authority (ADR-007) | 3 h |
