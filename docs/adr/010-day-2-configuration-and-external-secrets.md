@@ -49,7 +49,7 @@ ESO provider: the Vault provider for both directions, the dedicated OpenBao prov
 
 Store objects: two cluster-scoped stores using referent authentication, or a SecretStore in every consuming namespace. A namespaced store cannot reference the CA Secret in another namespace, so the second option means inlining the CA in Git or copying it into each namespace.
 
-Path layout: one KV v2 mount with a prefix per direction, or one mount per direction.
+Path layout: one KV v2 mount with a prefix per direction, or one mount per direction, and what to call the mount, given that the admin policy from first initialization covers a fixed set of paths and cannot be rewritten by the stanza that created it.
 
 ## Decision
 
@@ -74,11 +74,11 @@ ESO:
 
 Secrets layout and access:
 
-- One KV version 2 mount named `kv`, with `kv/apps/<namespace>/...` for secrets that OpenBao holds for workloads and `kv/pushed/<namespace>/...` for secrets that workloads send to OpenBao. No path is ever both the source of a pull and the destination of a push, which is what makes a sync loop impossible by construction. Version 2 is required because ESO marks the secrets it manages with custom metadata.
+- One KV version 2 mount at `secret`, with `secret/apps/<namespace>/...` for secrets that OpenBao holds for workloads and `secret/pushed/<namespace>/...` for secrets that workloads send to OpenBao. The name is `secret` because the admin policy that the `initialize` stanza wrote once already grants `secret/*`, and that stanza cannot run again. Any other mount name would mean either extending the admin policy from the Job, which crosses the boundary this ADR draws between first initialization and day two, or adding a second administrative identity for no gain. OpenBao 2.x mounts no KV engine by default, so nothing occupies that path. No path is ever both the source of a pull and the destination of a push, which is what makes a sync loop impossible by construction. Version 2 is required because ESO marks the secrets it manages with custom metadata.
 - Two cluster-scoped stores, `openbao-pull` and `openbao-push`, both using referent authentication, so each one logs in with a ServiceAccount resolved in the namespace of the resource that uses it. Both carry `spec.conditions` with an explicit namespace list, so ESO refuses the store to any other namespace before OpenBao is contacted at all.
 - Each consuming namespace has ServiceAccounts `eso-pull` and `eso-push`, both with `automountServiceAccountToken: false`.
 - The two Kubernetes auth roles bind those names, an explicit list of namespaces and the audience `openbao`, set `token_no_default_policy`, and issue tokens with a TTL of 20 minutes and a maximum of one hour.
-- The two policies are templated on the calling namespace. Pull grants read under `kv/data/apps/<caller>/`. Push grants create, update and read under `kv/data/pushed/<caller>/` and its metadata path, and delete only there. A role bound more widely than intended still cannot reach another namespace's path.
+- The two policies are templated on the calling namespace. Pull grants read under `secret/data/apps/<caller>/`. Push grants create, update and read under `secret/data/pushed/<caller>/` and its metadata path, and delete only there. A role bound more widely than intended still cannot reach another namespace's path.
 - Both stores read the CA from the `ca.crt` key of the listener Secret in the `openbao` namespace through `caProvider`, so the CA is neither committed nor copied.
 - ExternalSecrets refresh every hour by default. The demo uses one minute so that propagation is visible in the evidence.
 - PushSecrets use `updatePolicy: Replace`, so a secret in OpenBao that ESO did not create is never overwritten. `deletionPolicy: Delete` is used only under the demo prefix, where deleting the PushSecret is meant to remove the remote secret.
