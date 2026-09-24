@@ -122,6 +122,69 @@ Check:
 
 Backup and restore procedures are in [Backup and restore](docs/backup-restore.md).
 
+## OpenBao
+
+OpenBao runs in the `openbao` namespace with three replicas, one per worker, using the PostgreSQL cluster in the `database` namespace as its storage backend. It is deployed by a Flux `HelmRelease` for chart `openbao` 0.29.6, with the server image pinned by digest.
+
+The pods hold no persistent state. All data lives in PostgreSQL, so no volumes are requested and a pod can be deleted and recreated without data loss.
+
+### Storage backend
+
+The connection uses the standard PostgreSQL environment variables instead of a connection URL, so the password never appears inside a connection string. `PGSSLMODE` is `verify-full` and `PGSSLROOTCERT` points at the `ca.crt` that cert-manager writes into OpenBao's own listener secret, which is the same platform CA that signed the database server certificate.
+
+| Parameter | Value | Reason |
+|---|---|---|
+| `max_parallel` | 16 | The default of 128 would allow up to 384 connections from three replicas against a primary whose `max_connections` is 100. |
+| `transaction_max_parallel` | 15 | Keeps one connection available for HA lock renewal. Version 2.7.0 enforces this relationship automatically. |
+| `max_connect_retries` | 50 | The retry backoff starts at 15 ms and caps at 5 s, so 50 attempts cover about three minutes. |
+
+### TLS
+
+The listener certificate is issued by the platform CA and covers the `openbao` and `openbao-active` Services in all four name forms plus the wildcard `*.openbao-internal.openbao.svc.cluster.local` used by the per-pod address. Request forwarding on port 8201 uses OpenBao's own internally generated certificate and not this one.
+
+### Seal and initialization
+
+The static seal reads a 32 byte AES-256 key from a file mounted from Secret `openbao-seal`, which is stored SOPS-encrypted in Git. Because unsealing is automatic, the server initializes itself from the `initialize` stanza in its configuration: no root token is returned and no recovery keys are created. The temporary root token is revoked as the last step of initialization.
+
+The stanza enables Kubernetes auth, creates the `admin` policy, binds an `admin` role to the `openbao-admin` ServiceAccount with audience `openbao`, enables `userpass`, and creates a `break-glass` user whose password is read from an environment variable.
+
+Initialization happens once. The three replicas start in order and one acquires the HA initialization lock. A restarted pod unseals from the stored key without re-running the stanza.
+
+The audit device is declared in the server configuration rather than created through the API, because API-driven audit device creation is disabled by default and because a configured device is active before initialization runs, so the initialization requests are themselves audited.
+
+### Administration
+
+Both paths return the `admin` policy together with the built-in `default` policy. Neither uses the `root` policy.
+
+Kubernetes auth:
+
+    TOKEN=$(kubectl --context kind-openbao-local -n openbao create token openbao-admin --audience openbao)
+    printf '%s' "$TOKEN" | kubectl --context kind-openbao-local -n openbao exec -i openbao-0 -- sh -c 'read J; BAO_ADDR=https://$HOSTNAME.openbao-internal.openbao.svc.cluster.local:8200 BAO_CACERT=/openbao/userconfig/openbao-tls/ca.crt bao write auth/kubernetes/login role=admin jwt="$J"'
+
+Break-glass, for use when the Kubernetes auth path is unavailable:
+
+    PW=$(sops decrypt platform/openbao/break-glass-password.sops.yaml | awk '/password:/ {print $2}')
+    printf '%s' "$PW" | kubectl --context kind-openbao-local -n openbao exec -i openbao-0 -- sh -c 'read P; BAO_ADDR=https://$HOSTNAME.openbao-internal.openbao.svc.cluster.local:8200 BAO_CACERT=/openbao/userconfig/openbao-tls/ca.crt bao write auth/userpass/login/break-glass password="$P"'
+
+A service account token requested without `--audience openbao` is rejected with an invalid audience error.
+
+### Secrets in the `openbao` namespace
+
+| Secret | Contents | Source |
+|---|---|---|
+| `openbao-seal` | 32 byte seal key | SOPS |
+| `openbao-db-credential` | database username and password | SOPS, the same value as the copy in `database` |
+| `openbao-break-glass` | break-glass password | SOPS |
+| `openbao-tls` | listener certificate, key and CA | cert-manager |
+
+### Operational notes
+
+The StatefulSet uses the `OnDelete` update strategy, so a configuration change does not restart pods by itself. Delete the standbys first and the active pod last, which upgrades leadership last rather than failing over to an older version.
+
+The container's default `BAO_ADDR` is `https://127.0.0.1:8200`, which is not a name on the listener certificate. Commands run inside a pod must pass the pod's own address and `BAO_CACERT`, as the examples above do.
+
+The listener certificate is valid for 90 days and renews at about day 60. Version 2.6.3 has no automatic certificate reload; `tls_auto_reload` arrives in 2.7.0.
+
 ### TLS
 
 The PostgreSQL server certificate is issued by cert-manager from the platform CA (see ADR-007). A self-signed `ClusterIssuer` creates the root certificate `platform-ca` in the `cert-manager` namespace, and a CA `ClusterIssuer` signs with it. The `database` namespace holds a `Certificate` whose Secret the cluster references as both `serverTLSSecret` and `serverCASecret`, labelled `cnpg.io/reload` so the instances pick up a renewed certificate without a restart. CloudNativePG keeps its own CA for the client and replication certificates, so the database has two trust domains. The same platform CA issues OpenBao's listener certificate, which is how OpenBao obtains the CA it needs to verify PostgreSQL with `sslmode=verify-full`.
