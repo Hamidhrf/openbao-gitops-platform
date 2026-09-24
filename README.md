@@ -156,5 +156,6 @@ All nodes are containers on one VM, so a node failure here is a container failur
 - [ADR-005: Backup target](docs/adr/005-backup-target.md)
 - [ADR-006: Repository layout and namespaces](docs/adr/006-repo-layout-and-namespaces.md)
 - [ADR-007: TLS and the certificate authority](docs/adr/007-tls-and-ca.md)
+- [ADR-008: OpenBao initialization, unseal and administrative access](docs/adr/008-openbao-init-and-unseal.md)
 - [Backup and restore](docs/backup-restore.md)
 - [Time log](TIMELOG.md)

@@ -15,3 +15,4 @@ Approximate working time per task, including reading docs and debugging.
 | Repo layout and namespaces (ADR-006) | 2 h |
 | PostgreSQL deployment, backups and failure tests | 4 h |
 | TLS and the certificate authority (ADR-007) | 3 h |
+| OpenBao init and unseal decision (ADR-008) | 2 h |
