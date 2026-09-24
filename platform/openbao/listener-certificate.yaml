@@ -1,0 +1,32 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: openbao-tls
+  namespace: openbao
+spec:
+  secretName: openbao-tls
+  commonName: openbao
+  dnsNames:
+    - openbao
+    - openbao.openbao
+    - openbao.openbao.svc
+    - openbao.openbao.svc.cluster.local
+    - openbao-active
+    - openbao-active.openbao
+    - openbao-active.openbao.svc
+    - openbao-active.openbao.svc.cluster.local
+    - "*.openbao-internal.openbao.svc.cluster.local"
+  usages:
+    - digital signature
+    - key encipherment
+    - server auth
+  duration: 2160h
+  renewBeforePercentage: 33
+  privateKey:
+    algorithm: RSA
+    size: 2048
+    rotationPolicy: Always
+  issuerRef:
+    name: platform-ca
+    kind: ClusterIssuer
+    group: cert-manager.io
