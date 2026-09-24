@@ -93,8 +93,7 @@ spec:
           enabled: false
         config: |
           ui = false
-          disable_mlock = true
-          log_level = "debug"
+          log_level = "info"
 
           listener "tcp" {
             address         = "[::]:8200"
