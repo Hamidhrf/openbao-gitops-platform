@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: Secret
+metadata:
+    name: openbao-seal
+    namespace: openbao
+type: Opaque
+data:
+    seal.key: ENC[AES256_GCM,data:tgXdzG9L3t1yN2OZfHhtxWs+j3k7SkcCy1BzJLenwlipaBNk8RbofAtNqNE=,iv:HGFFymDniTyHYEl6zeVu6f/dT2VpcXRsD9Z21sulepI=,tag:qtwg9Uqs58mM5oncuyjp0g==,type:str]
+sops:
+    age:
+        - enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBueWtSQjRJaU5wVG1tK1ZJ
+            S0pxb0ZNQUJRdHRKYzhXYk9ZOFNrOGx1V1RZCnhhTkhkWGNsbU1JQXdIMXFtaUlM
+            bGdTVk5pLzM0WGhYZjArMmZSTzVqR1UKLS0tIHhpaVJpN2x4eVdCSGdXR3J6L2dS
+            d0VIL2YrckpYN2xGeHBHZWxwaGVpc0kKfNub0kdDh3KFdZYJh5mNyeOWNopbh94G
+            j7NuX6BmNbQGIi1D8Bvgf542Vm6ohkHsKOLKYwT+LRJHwva/3TJtnQ==
+            -----END AGE ENCRYPTED FILE-----
+          recipient: age1hyt4450vl74xy5nlf585jm53lrxhapqy8rn9tm7w922rnmf6uevsj0llcl
+        - enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBFSDIyNGtTaXpZcCtoa3I1
+            TFFncEk5QzhwcDYyYk5UQWg3OE5keDVOSUJVClhJeElYRGtneERoekM1dWRHekYv
+            azhrd3I2SHp2UXdKd0JrZGd0YmlObFUKLS0tIEtJM0o5VXI5VVVhcFRHRzFzS3pD
+            MlFIeTZrc3d6WUw1WkZMbnRiblFqQ0kK1IjtvldjiiyhERFwt9d6HB2dyjKkC1sy
+            C/+YvH4WoDHBvVIuWmHWdMWD80b2b/d06O/Wehkg5ztFZWRjTHBytw==
+            -----END AGE ENCRYPTED FILE-----
+          recipient: age1hwv2gk7peqx7lr7q08pvd3ec5djs3n57mrswf9maexy4puay53msy7395t
+    encrypted_regex: ^(data|stringData)$
+    lastmodified: "2026-09-24T10:12:53Z"
+    mac: ENC[AES256_GCM,data:Th+JzJnSdqETjnDQjMRdTwsjo5vsqyeQJTF42jWJUNCdatzegx058JqB2L4yYBgFRd3kot/sGSKGZKzoJ7sZCBEQgpVeyRb7ArlU4XC1+ogqtcPVdUKPLP+WyzQkson7W+2iX6j11iNz4vLi85Jk0+KJzPEmsPDS6OMsJvE/PgU=,iv:nNL3TjaJ6sBpX1UJjVK5H2WFxEWH2y5Yt5uaIPVYz2M=,tag:rqYudNzZaoZmOAcVQ1l3Sw==,type:str]
+    version: 3.13.3
