@@ -1,0 +1,72 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: openbao-configure
+  namespace: openbao
+  annotations:
+    kustomize.toolkit.fluxcd.io/force: enabled
+spec:
+  backoffLimit: 3
+  template:
+    spec:
+      restartPolicy: Never
+      serviceAccountName: openbao-admin
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 100
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: configure
+          image: quay.io/openbao/openbao:2.6.3@sha256:a60afafda36337abe833c4a63894bf1095098f29abea4091e7e555a33dd52889
+          command:
+            - sh
+            - /config/configure.sh
+          env:
+            - name: BAO_ADDR
+              value: https://openbao-active.openbao.svc:8200
+            - name: BAO_CACERT
+              value: /openbao/tls/ca.crt
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+          volumeMounts:
+            - name: config
+              mountPath: /config
+              readOnly: true
+            - name: tls
+              mountPath: /openbao/tls
+              readOnly: true
+            - name: token
+              mountPath: /var/run/secrets/openbao
+              readOnly: true
+      volumes:
+        - name: config
+          configMap:
+            name: openbao-configure
+        - name: tls
+          secret:
+            secretName: openbao-tls
+            items:
+              - key: ca.crt
+                path: ca.crt
+        - name: token
+          projected:
+            sources:
+              - serviceAccountToken:
+                  audience: openbao
+                  expirationSeconds: 600
+                  path: token
