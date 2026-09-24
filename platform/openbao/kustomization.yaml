@@ -4,4 +4,6 @@ resources:
   - namespace.yaml
   - seal-key.sops.yaml
   - openbao-db-credential.sops.yaml
+  - break-glass-password.sops.yaml
+  - admin-serviceaccount.yaml
   - listener-certificate.yaml
