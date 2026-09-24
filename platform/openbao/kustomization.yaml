@@ -7,3 +7,4 @@ resources:
   - break-glass-password.sops.yaml
   - admin-serviceaccount.yaml
   - listener-certificate.yaml
+  - release.yaml

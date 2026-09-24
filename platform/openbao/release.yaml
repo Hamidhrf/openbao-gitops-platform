@@ -1,0 +1,206 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: openbao
+  namespace: openbao
+spec:
+  interval: 1h
+  url: https://openbao.github.io/openbao-helm
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: openbao
+  namespace: openbao
+spec:
+  interval: 1h
+  timeout: 10m
+  releaseName: openbao
+  chart:
+    spec:
+      chart: openbao
+      version: 0.29.6
+      sourceRef:
+        kind: HelmRepository
+        name: openbao
+        namespace: openbao
+  values:
+    global:
+      tlsDisable: false
+    injector:
+      enabled: false
+    csi:
+      enabled: false
+    ui:
+      enabled: false
+    server:
+      image:
+        registry: quay.io
+        repository: openbao/openbao
+        tag: "2.6.3@sha256:a60afafda36337abe833c4a63894bf1095098f29abea4091e7e555a33dd52889"
+      authDelegator:
+        enabled: true
+      serviceAccount:
+        serviceDiscovery:
+          enabled: true
+      dataStorage:
+        enabled: false
+      auditStorage:
+        enabled: false
+      resources:
+        requests:
+          cpu: 500m
+          memory: 512Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+      volumes:
+        - name: openbao-tls
+          secret:
+            secretName: openbao-tls
+        - name: openbao-seal
+          secret:
+            secretName: openbao-seal
+      volumeMounts:
+        - name: openbao-tls
+          mountPath: /openbao/userconfig/openbao-tls
+          readOnly: true
+        - name: openbao-seal
+          mountPath: /openbao/userconfig/openbao-seal
+          readOnly: true
+      extraEnvironmentVars:
+        PGHOST: openbao-db-rw.database.svc
+        PGPORT: "5432"
+        PGDATABASE: openbao
+        PGSSLMODE: verify-full
+        PGSSLROOTCERT: /openbao/userconfig/openbao-tls/ca.crt
+      extraSecretEnvironmentVars:
+        - envName: PGUSER
+          secretName: openbao-db-credential
+          secretKey: username
+        - envName: PGPASSWORD
+          secretName: openbao-db-credential
+          secretKey: password
+        - envName: BREAK_GLASS_PASSWORD
+          secretName: openbao-break-glass
+          secretKey: password
+      ha:
+        enabled: true
+        replicas: 3
+        apiAddr: https://$(BAO_K8S_POD_NAME).openbao-internal.openbao.svc.cluster.local:8200
+        clusterAddr: https://$(BAO_K8S_POD_NAME).openbao-internal.openbao.svc.cluster.local:8201
+        raft:
+          enabled: false
+        config: |
+          ui = false
+          disable_mlock = true
+          log_level = "debug"
+
+          listener "tcp" {
+            address         = "[::]:8200"
+            cluster_address = "[::]:8201"
+            tls_cert_file   = "/openbao/userconfig/openbao-tls/tls.crt"
+            tls_key_file    = "/openbao/userconfig/openbao-tls/tls.key"
+          }
+
+          storage "postgresql" {
+            table                    = "openbao_kv_store"
+            ha_table                 = "openbao_ha_locks"
+            ha_enabled               = "true"
+            max_parallel             = "16"
+            transaction_max_parallel = "15"
+            max_connect_retries      = 50
+          }
+
+          seal "static" {
+            current_key_id = "20260924-1"
+            current_key    = "file:///openbao/userconfig/openbao-seal/seal.key"
+          }
+
+          service_registration "kubernetes" {}
+
+          audit "file" "to-stdout" {
+            description = "Write audit information to standard output."
+            options {
+              file_path = "stdout"
+            }
+          }
+
+          initialize "platform" {
+            request "enable-kubernetes-auth" {
+              operation = "update"
+              path      = "sys/auth/kubernetes"
+              data = {
+                type = "kubernetes"
+              }
+            }
+
+            request "configure-kubernetes-auth" {
+              operation = "update"
+              path      = "auth/kubernetes/config"
+              data = {
+                kubernetes_host = "https://kubernetes.default.svc"
+              }
+            }
+
+            request "create-admin-policy" {
+              operation = "update"
+              path      = "sys/policies/acl/admin"
+              data = {
+                policy = <<-EOT
+                  path "sys/*" {
+                    capabilities = ["create", "read", "update", "delete", "list", "sudo"]
+                  }
+
+                  path "auth/*" {
+                    capabilities = ["create", "read", "update", "delete", "list", "sudo"]
+                  }
+
+                  path "identity/*" {
+                    capabilities = ["create", "read", "update", "delete", "list"]
+                  }
+
+                  path "secret/*" {
+                    capabilities = ["create", "read", "update", "delete", "list"]
+                  }
+                EOT
+              }
+            }
+
+            request "create-admin-role" {
+              operation = "update"
+              path      = "auth/kubernetes/role/admin"
+              data = {
+                bound_service_account_names      = ["openbao-admin"]
+                bound_service_account_namespaces = ["openbao"]
+                audience                         = "openbao"
+                token_policies                   = ["admin"]
+                token_ttl                        = "30m"
+                token_max_ttl                    = "1h"
+              }
+            }
+
+            request "enable-userpass" {
+              operation = "update"
+              path      = "sys/auth/userpass"
+              data = {
+                type = "userpass"
+              }
+            }
+
+            request "create-break-glass-user" {
+              operation = "update"
+              path      = "auth/userpass/users/break-glass"
+              data = {
+                password = {
+                  eval_source     = "env"
+                  eval_type       = "string"
+                  env_var         = "BREAK_GLASS_PASSWORD"
+                  require_present = true
+                }
+                token_policies = ["admin"]
+                token_ttl      = "30m"
+                token_max_ttl  = "1h"
+              }
+            }
+          }
