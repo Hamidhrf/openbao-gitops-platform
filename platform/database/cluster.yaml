@@ -53,4 +53,4 @@ spec:
         # recovered from: CloudNativePG refuses to write into a non-empty
         # archive and stays in Setting up primary. Each recovery therefore
         # starts a new catalogue generation, named for the day it began.
-        serverName: openbao-db-dr-20260925
+        serverName: openbao-db-dr-20260925b
