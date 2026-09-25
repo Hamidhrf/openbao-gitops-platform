@@ -17,3 +17,4 @@ Approximate working time per task, including reading docs and debugging.
 | TLS and the certificate authority (ADR-007) | 3 h |
 | OpenBao init and unseal decision (ADR-008) | 2 h |
 | OpenBao version, configuration and HA deployment (ADR-009) | 5 h |
+| External Secrets and day-2 configuration (ADR-010) | 5 h |

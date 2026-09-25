@@ -1,6 +1,6 @@
 # openbao-gitops-platform
 
-Work in progress. The local cluster runs Flux, cert-manager, CloudNativePG and a three-instance PostgreSQL cluster backed up to the VM's backup store. OpenBao and External Secrets Operator are not deployed yet.
+Work in progress. The local cluster runs Flux, cert-manager, CloudNativePG with a three-instance PostgreSQL cluster backed up to the VM's backup store, OpenBao in HA on that database, and External Secrets Operator synchronising secrets in both directions. Exposing the platform outside the cluster is not done yet.
 
 Goal: OpenBao in HA mode with an HA PostgreSQL backend, deployed with Flux, and External Secrets Operator syncing secrets between OpenBao and Kubernetes in both directions.
 
@@ -21,6 +21,8 @@ It runs on a local kind cluster with one control-plane node and three workers.
 | CloudNativePG | v1.30.0 |
 | Barman Cloud Plugin | v0.15.0 |
 | PostgreSQL | 18.6 |
+| OpenBao | 2.6.3 |
+| External Secrets Operator | 2.11.0 |
 
 ## Local tools
 
@@ -73,7 +75,7 @@ Check:
 
 `clusters/local/` holds one Flux Kustomization per file, next to the generated `flux-system` directory. `infrastructure/controllers/` holds the operators, `infrastructure/configs/` the cluster-wide configuration they consume, `platform/` the services this repository delivers, and `apps/` the workloads that consume them. Each Kustomization depends on the previous one and waits for it, which is what registers CRDs before the resources that use them (see ADR-006):
 
-    infra-controllers -> infra-configs -> database -> openbao -> apps
+    infra-controllers -> infra-configs -> database -> openbao -> openbao-config -> apps
 
 Kustomizations are added as their directories gain content. Namespaces, chart sources and HelmReleases for a component live together in that component's namespace.
 
@@ -122,6 +124,31 @@ Check:
 
 Backup and restore procedures are in [Backup and restore](docs/backup-restore.md).
 
+### Failover
+
+Observed on 23 September 2026 on this cluster.
+
+Deleting the primary pod promoted a standby about one second later, and the deleted instance rejoined as a standby.
+
+Stopping the worker that ran the primary took longer. The node was marked NotReady after 46 seconds, the pod was marked for deletion five minutes after that by the default toleration for `node.kubernetes.io/unreachable`, and promotion followed within a second. On a node failure the recovery time is dominated by that Kubernetes default rather than by the operator, and it can be shortened with a shorter toleration on the instance pods.
+
+Stopping two of three workers left one reachable instance out of two candidate standbys. The operator refused to promote it and logged a failed strong consistency check, because it cannot establish that the survivor holds every acknowledged commit. Writes stopped rather than risking their loss. The cluster returned to three healthy instances on its own once the workers came back, with no manual promotion. `kubectl cnpg promote` exists for the case where availability matters more than possible data loss, and it stays a deliberate human decision.
+
+All nodes are containers on one VM, so a node failure here is a container failure rather than a host or zone failure. Instance volumes are node-local, so an instance on a stopped node cannot be rescheduled elsewhere and returns only when that node does.
+
+## TLS and the certificate authority
+
+The PostgreSQL server certificate is issued by cert-manager from the platform CA (see ADR-007). A self-signed `ClusterIssuer` creates the root certificate `platform-ca` in the `cert-manager` namespace, and a CA `ClusterIssuer` signs with it. The `database` namespace holds a `Certificate` whose Secret the cluster references as both `serverTLSSecret` and `serverCASecret`, labelled `cnpg.io/reload` so the instances pick up a renewed certificate without a restart. CloudNativePG keeps its own CA for the client and replication certificates, so the database has two trust domains. The same platform CA issues OpenBao's listener certificate, which is how OpenBao obtains the CA it needs to verify PostgreSQL with `sslmode=verify-full`.
+
+Switching the running cluster from the operator's certificates to these was a reload: the instance pods kept their UIDs and restart counts and the cluster never left the Ready condition.
+
+Check:
+
+    kubectl --context kind-openbao-local get certificate -A
+    kubectl --context kind-openbao-local get cluster openbao-db -n database -o jsonpath='{.status.certificates}{"\n"}'
+
+A client inside the cluster connecting to `openbao-db-rw.database.svc` with `sslmode=verify-full` and this CA completes the handshake and is refused only at authentication. Connecting to the same server by IP address is refused, because the certificate carries no IP address.
+
 ## OpenBao
 
 OpenBao runs in the `openbao` namespace with three replicas, one per worker, using the PostgreSQL cluster in the `database` namespace as its storage backend. It is deployed by a Flux `HelmRelease` for chart `openbao` 0.29.6, with the server image pinned by digest.
@@ -138,7 +165,7 @@ The connection uses the standard PostgreSQL environment variables instead of a c
 | `transaction_max_parallel` | 15 | Keeps one connection available for HA lock renewal. Version 2.7.0 enforces this relationship automatically. |
 | `max_connect_retries` | 50 | The retry backoff starts at 15 ms and caps at 5 s, so 50 attempts cover about three minutes. |
 
-### TLS
+### Listener TLS
 
 The listener certificate is issued by the platform CA and covers the `openbao` and `openbao-active` Services in all four name forms plus the wildcard `*.openbao-internal.openbao.svc.cluster.local` used by the per-pod address. Request forwarding on port 8201 uses OpenBao's own internally generated certificate and not this one.
 
@@ -185,30 +212,93 @@ The container's default `BAO_ADDR` is `https://127.0.0.1:8200`, which is not a n
 
 The listener certificate is valid for 90 days and renews at about day 60. Version 2.6.3 has no automatic certificate reload; `tls_auto_reload` arrives in 2.7.0.
 
-### TLS
+## External Secrets
 
-The PostgreSQL server certificate is issued by cert-manager from the platform CA (see ADR-007). A self-signed `ClusterIssuer` creates the root certificate `platform-ca` in the `cert-manager` namespace, and a CA `ClusterIssuer` signs with it. The `database` namespace holds a `Certificate` whose Secret the cluster references as both `serverTLSSecret` and `serverCASecret`, labelled `cnpg.io/reload` so the instances pick up a renewed certificate without a restart. CloudNativePG keeps its own CA for the client and replication certificates, so the database has two trust domains. The same platform CA issues OpenBao's listener certificate, which is how OpenBao obtains the CA it needs to verify PostgreSQL with `sslmode=verify-full`.
+External Secrets Operator runs in the `external-secrets` namespace, installed by a Flux `HelmRelease` in the controllers layer. It moves secrets in both directions: OpenBao to Kubernetes with an `ExternalSecret`, and Kubernetes to OpenBao with a `PushSecret` (see ADR-010). Push is available only through the HashiCorp Vault provider; the dedicated OpenBao provider is read-only.
 
-Switching the running cluster from the operator's certificates to these was a reload: the instance pods kept their UIDs and restart counts and the cluster never left the Ready condition.
+Two chart defaults are changed. `rbac.serviceAccountTokenCreate` is false, so the controller holds no cluster-wide permission to create tokens for arbitrary ServiceAccounts, and each consuming namespace grants that for named ServiceAccounts instead. The cluster-scoped kinds this platform does not use are not installed and their reconcilers are off, which also removes the controller's `update` and `patch` permission on namespaces.
 
 Check:
 
-    kubectl --context kind-openbao-local get certificate -A
-    kubectl --context kind-openbao-local get cluster openbao-db -n database -o jsonpath='{.status.certificates}{"\n"}'
+    kubectl --context kind-openbao-local -n external-secrets get helmrelease,deploy
+    kubectl --context kind-openbao-local get clusterrole external-secrets-controller \
+      -o jsonpath='{range .rules[*]}{.apiGroups}{" "}{.resources}{" "}{.verbs}{"\n"}{end}' | grep -E 'serviceaccounts|namespaces'
 
-A client inside the cluster connecting to `openbao-db-rw.database.svc` with `sslmode=verify-full` and this CA completes the handshake and is refused only at authentication. Connecting to the same server by IP address is refused, because the certificate carries no IP address.
+### Day-2 configuration
 
-### Failover
+The `initialize` stanza runs once, at first initialization, and cannot carry later changes. Everything after it comes from a `Job` in the `openbao` namespace, applied by Flux from `platform/openbao-config/`. The Job runs the same OpenBao image as the servers, logs in through Kubernetes auth as `openbao-admin` with a projected token at audience `openbao`, talks to the `openbao-active` Service so writes reach the active node, and applies the desired state with commands that are safe to repeat.
 
-Observed on 23 September 2026 on this cluster.
+It owns the KV mount and its version limit, the `eso-pull` and `eso-push` policies, and the two Kubernetes auth roles. It does not touch the seal, the `admin` policy or the `admin` role, which belong to first initialization. It reads the Kubernetes auth mount accessor from the running server before rendering the templated policies, so nothing in Git depends on an identifier that changes when the auth backend is recreated.
 
-Deleting the primary pod promoted a standby about one second later, and the deleted instance rejoined as a standby.
+The script lives in a ConfigMap generated with a content hash, so changing the script changes the ConfigMap name and therefore the Job's pod template. A Job's spec is immutable, so the Job carries `kustomize.toolkit.fluxcd.io/force: enabled` and Flux replaces it rather than failing to patch it. The Flux Kustomization does not force, because the same directory holds objects that should not be replaced that way.
 
-Stopping the worker that ran the primary took longer. The node was marked NotReady after 46 seconds, the pod was marked for deletion five minutes after that by the default toleration for `node.kubernetes.io/unreachable`, and promotion followed within a second. On a node failure the recovery time is dominated by that Kubernetes default rather than by the operator, and it can be shortened with a shorter toleration on the instance pods.
+To apply a configuration change, edit `platform/openbao-config/configure.sh` and push. A Job that has exhausted its attempts has an unchanged spec, so it is re-run either by a change to the script or by deleting the Job, after which Flux applies it again on its next reconcile.
 
-Stopping two of three workers left one reachable instance out of two candidate standbys. The operator refused to promote it and logged a failed strong consistency check, because it cannot establish that the survivor holds every acknowledged commit. Writes stopped rather than risking their loss. The cluster returned to three healthy instances on its own once the workers came back, with no manual promotion. `kubectl cnpg promote` exists for the case where availability matters more than possible data loss, and it stays a deliberate human decision.
+    kubectl --context kind-openbao-local -n openbao get job openbao-configure
+    kubectl --context kind-openbao-local -n openbao logs job/openbao-configure
 
-All nodes are containers on one VM, so a node failure here is a container failure rather than a host or zone failure. Instance volumes are node-local, so an instance on a stopped node cannot be rescheduled elsewhere and returns only when that node does.
+### Secret layout
+
+One KV version 2 engine is mounted at `secret`, with one prefix per direction:
+
+| Path | Direction | Written by |
+|---|---|---|
+| `secret/apps/<namespace>/...` | OpenBao to Kubernetes | an operator or another system |
+| `secret/pushed/<namespace>/...` | Kubernetes to OpenBao | External Secrets, through a `PushSecret` |
+
+No path is both the source of a pull and the destination of a push, so a synchronisation loop cannot form. The mount keeps ten versions of each secret: without a limit KV v2 keeps every version forever, and here every version is a row in PostgreSQL.
+
+The mount is named `secret` because the `admin` policy written once by the `initialize` stanza grants `secret/*`, and that stanza cannot be re-run to widen it.
+
+### Stores and identities
+
+Two `ClusterSecretStore` objects, `openbao-pull` and `openbao-push`. Both address the `openbao-active` Service and both read the CA from the `ca.crt` key of the `openbao-tls` Secret in the `openbao` namespace, which is possible only for a cluster-scoped store and means no namespace has a copy of the CA.
+
+Neither store names a namespace for its ServiceAccount, so each authenticates with a ServiceAccount of that name in the namespace of the resource using it. A consuming namespace therefore provides two ServiceAccounts, `eso-pull` and `eso-push`, neither mounted into any pod, and a `Role` that lets the External Secrets controller create tokens for exactly those two names.
+
+The OpenBao roles bind the ServiceAccount name, an explicit namespace list and the audience `openbao`, and issue tokens that last 20 minutes and carry no default policy. The two policies are templated on the calling namespace, so a namespace reaches only its own prefix even if a role were bound more widely than intended. Both stores also restrict which namespaces may reference them.
+
+A store reporting Ready means its own validation passed, not that any namespace can authenticate through it. Only a working `ExternalSecret` or `PushSecret` shows that.
+
+Check:
+
+    kubectl --context kind-openbao-local get clustersecretstore
+
+### Using it
+
+Write a secret as an administrator. The platform owns the mount, the policies and the roles; the values come from an operator or another system:
+
+    TOKEN=$(kubectl --context kind-openbao-local -n openbao create token openbao-admin --audience openbao)
+    printf '%s' "$TOKEN" | kubectl --context kind-openbao-local -n openbao exec -i openbao-0 -- sh -c 'read J; export BAO_ADDR=https://openbao-active.openbao.svc:8200 BAO_CACERT=/openbao/userconfig/openbao-tls/ca.crt; export BAO_TOKEN=$(bao write -field=token auth/kubernetes/login role=admin jwt="$J"); bao kv put secret/apps/demo/config message=hello-from-openbao greeting=guten-tag'
+
+The `demo` namespace in `apps/demo/` consumes it. `pull.yaml` holds an `ExternalSecret` that extracts every key of `apps/demo/config` into a Secret, and a Deployment that mounts that Secret as a directory and prints the files. `push.yaml` holds a cert-manager `Certificate` whose Secret is the source of a `PushSecret` writing the certificate and its key to `secret/pushed/demo/client` as two properties.
+
+    kubectl --context kind-openbao-local -n demo get externalsecret,pushsecret,secret
+    kubectl --context kind-openbao-local -n demo logs deploy/demo --tail=3
+
+### Operational notes
+
+Observed on 25 September 2026 on this cluster.
+
+A new value written to OpenBao reached the workload's mounted file about 40 seconds later, with a one minute refresh interval on the `ExternalSecret`, and the pod kept its start time and zero restarts. Two intervals are involved: External Secrets rewrites the Secret on its refresh interval, and the kubelet then updates the mounted files on its own period. A Secret consumed as environment variables would not update at all until the pod restarts, which is why the demo mounts it as a directory.
+
+A `PushSecret` with `deletionPolicy: Delete` holds a finalizer. Deleting the `PushSecret`, or its source Secret, removes the secret in OpenBao, data and metadata together, before the finalizer clears. The value returns when Flux restores the `PushSecret`, as a new secret starting again at version 1 rather than an older version resurfacing. Deleting it by hand is corrected on the Kustomization's own interval of one hour, not on the one minute interval of the GitRepository, which only governs how quickly new commits are noticed.
+
+Secrets that External Secrets pushed carry the custom metadata `managed-by: external-secrets`. With `updatePolicy: Replace`, a secret without that marker is never overwritten, which is what protects operator-written paths.
+
+The `eso-pull` and `eso-push` tokens have no default policy, so they cannot revoke themselves; they expire instead. That is a deliberate consequence of `token_no_default_policy` and applies to every identity configured that way.
+
+### Limitations
+
+The External Secrets controller holds get, list, watch, create, update, delete and patch on Secrets across the cluster, because that is what it does for a living. The per-namespace token `Role` narrows which identities it can assume, not what it can read, so reading the CA out of the `openbao-tls` Secret avoids copying rather than establishing a boundary. The boundary that does hold is that the seal key and the certificate authority's private key are in namespaces no store references.
+
+Creating a `PushSecret` is a privileged action: anyone who can create one in an allowed namespace can have the controller read a Secret there and write it into OpenBao. These objects stay in Git, and the permission to create them is not given to application users.
+
+The Job runs when its script changes, not continuously, so configuration changed by hand inside OpenBao stays changed until the next run. A production platform would run the same idempotent reconciliation periodically or use a configuration controller with its own custom resources.
+
+Because the policies are rendered with an accessor discovered at run time, Git holds a template rather than the literal policy, so comparing Git with the live configuration cannot be a text comparison.
+
+A rebuild from Git restores the platform configuration, not the secrets an operator wrote: `secret/apps/demo/config` returns only from a database restore. The pushed certificate is different, because cert-manager generates a new one and External Secrets pushes it again, so what comes back there is a new credential rather than a recovered one.
 
 ## Docs
 
@@ -220,5 +310,7 @@ All nodes are containers on one VM, so a node failure here is a container failur
 - [ADR-006: Repository layout and namespaces](docs/adr/006-repo-layout-and-namespaces.md)
 - [ADR-007: TLS and the certificate authority](docs/adr/007-tls-and-ca.md)
 - [ADR-008: OpenBao initialization, unseal and administrative access](docs/adr/008-openbao-init-and-unseal.md)
+- [ADR-009: OpenBao version and server configuration](docs/adr/009-openbao-version-and-configuration.md)
+- [ADR-010: Day-2 configuration and External Secrets](docs/adr/010-day-2-configuration-and-external-secrets.md)
 - [Backup and restore](docs/backup-restore.md)
 - [Time log](TIMELOG.md)
