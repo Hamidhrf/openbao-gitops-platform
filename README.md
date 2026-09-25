@@ -1,6 +1,6 @@
 # openbao-gitops-platform
 
-Work in progress. The local cluster runs Flux, cert-manager, CloudNativePG with a three-instance PostgreSQL cluster backed up to the VM's backup store, OpenBao in HA on that database, and External Secrets Operator synchronising secrets in both directions. Exposing the platform outside the cluster is not done yet.
+The local cluster runs Flux, cert-manager, CloudNativePG with a three-instance PostgreSQL cluster backed up to the VM's backup store, OpenBao in HA on that database, External Secrets Operator synchronising secrets in both directions, and the OpenBao API exposed over TLS on a host port.
 
 Goal: OpenBao in HA mode with an HA PostgreSQL backend, deployed with Flux, and External Secrets Operator syncing secrets between OpenBao and Kubernetes in both directions.
 
@@ -122,7 +122,7 @@ Check:
     kubectl --context kind-openbao-local get pods -n database -o wide
     kubectl --context kind-openbao-local get cluster openbao-db -n database -o jsonpath='{range .status.conditions[*]}{.type}={.status} {end}{"\n"}'
 
-Backup and restore procedures are in [Backup and restore](docs/backup-restore.md).
+Backup and restore procedures are in [Backup and restore](docs/backup-restore.md). Rebuilding the platform after the Kubernetes cluster is lost is in [Disaster recovery](docs/disaster-recovery.md).
 
 ### Failover
 
@@ -194,6 +194,33 @@ Break-glass, for use when the Kubernetes auth path is unavailable:
     printf '%s' "$PW" | kubectl --context kind-openbao-local -n openbao exec -i openbao-0 -- sh -c 'read P; BAO_ADDR=https://$HOSTNAME.openbao-internal.openbao.svc.cluster.local:8200 BAO_CACERT=/openbao/userconfig/openbao-tls/ca.crt bao write auth/userpass/login/break-glass password="$P"'
 
 A service account token requested without `--audience openbao` is rejected with an invalid audience error.
+
+### External access
+
+The API is reachable from the VM at `https://openbao.local.test:8200` (see ADR-011). A NodePort Service named `openbao-external` selects the active server only, and kind maps host `127.0.0.1:8200` to node port 30820 on the control-plane node. The chart's own Services stay ClusterIP. The name resolves through `/etc/hosts` on the VM and is one of the names on the listener certificate.
+
+The mapping is on the control-plane node so that stopping a worker during a failure test does not take the external endpoint with it. The host port is bound to 127.0.0.1, so reaching it from elsewhere means an SSH forward.
+
+Check, using the platform CA from OpenBao's own listener secret:
+
+    kubectl --context kind-openbao-local -n openbao get secret openbao-tls \
+      -o jsonpath='{.data.ca\.crt}' | base64 -d > /tmp/platform-ca.crt
+    curl -s -o /dev/null -w '%{http_code}\n' \
+      --cacert /tmp/platform-ca.crt https://openbao.local.test:8200/v1/sys/health
+
+This returns 200. Without the CA, curl rejects the certificate. By IP address it is refused for a hostname mismatch, because the certificate carries no IP address.
+
+External access is for a person: an administrator running `bao` from the VM. Workloads reach OpenBao inside the cluster through External Secrets.
+
+### Failover through the external endpoint
+
+Measured on 25 September 2026 with one request per second through the host port.
+
+Stopping the node gracefully cost one failed request. Kubelet shut the pod down, OpenBao released the HA lock on the way out, a standby took it, and the EndpointSlice followed the label, all before the node condition changed.
+
+Killing the node cost about 52 seconds and twelve failed requests: roughly 15 seconds with no leader at all while the HA lock expired, then about 35 seconds during which half the requests reached a pod that no longer existed. The label that marks the active server is set by the pod on itself, so a killed pod cannot clear it, and the Service keeps selecting it until the node condition changes about 50 seconds after the kill.
+
+That is a different clock from the five minute unreachable toleration in the database Failover section above, which governs pod eviction rather than endpoint readiness. A client that retries sees far less than one that does not, and the `bao` CLI does not retry by default.
 
 ### Secrets in the `openbao` namespace
 
@@ -312,5 +339,7 @@ A rebuild from Git restores the platform configuration, not the secrets an opera
 - [ADR-008: OpenBao initialization, unseal and administrative access](docs/adr/008-openbao-init-and-unseal.md)
 - [ADR-009: OpenBao version and server configuration](docs/adr/009-openbao-version-and-configuration.md)
 - [ADR-010: Day-2 configuration and External Secrets](docs/adr/010-day-2-configuration-and-external-secrets.md)
+- [ADR-011: Service exposure](docs/adr/011-service-exposure.md)
 - [Backup and restore](docs/backup-restore.md)
+- [Disaster recovery](docs/disaster-recovery.md)
 - [Time log](TIMELOG.md)
