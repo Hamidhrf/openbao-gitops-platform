@@ -33,6 +33,9 @@ else
 fi
 log "mount $MOUNT/ options: $(bao read -field=options "sys/mounts/$MOUNT")"
 
+bao write "$MOUNT/config" max_versions=10
+log "mount $MOUNT/ max_versions: $(bao read -field=max_versions "$MOUNT/config")"
+
 ACCESSOR=$(bao read -field=accessor sys/auth/kubernetes)
 log "kubernetes auth accessor: $ACCESSOR"
 
