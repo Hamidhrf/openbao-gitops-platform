@@ -37,11 +37,11 @@ spec:
       owner: openbao
       secret:
         name: openbao-db-credential
-      # The target time selects the base backup and the stopping point.
-      # It lies after the last write to the lost cluster and before any
-      # later backup, so recovery replays the whole of timeline 3.
       recoveryTarget:
-        targetTime: "2026-09-25 12:20:00+00"
+        # The base backup to start from, named explicitly rather than
+        # left to the newest in the catalogue. No recovery target is set,
+        # so recovery replays every archived segment and then promotes.
+        backupID: "20260925T020001"
   externalClusters:
     - name: openbao-db
       plugin:
