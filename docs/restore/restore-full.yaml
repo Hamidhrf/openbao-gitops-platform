@@ -1,3 +1,12 @@
+# Full restore of openbao-db into a new Cluster, alongside the running one.
+#
+# serverName names the catalogue generation to read, not the cluster. The active
+# writer changes after every recovery, so confirm which generation holds the
+# recovery point before using this file. See docs/backup-restore.md.
+#
+# With no recoveryTarget, recovery takes the newest base backup in that
+# generation. List the base backups first and pin one when the newest is not the
+# one you want.
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
@@ -11,10 +20,16 @@ spec:
   bootstrap:
     recovery:
       source: openbao-db
+      # Required when the generation holds an unwanted newer base backup, such as
+      # one written by a failed recovery, or when a specific recovery point is
+      # intended. The id is the barman one, printed in the recovery log as
+      # "backup_id", for example 20260925T020001.
+      # recoveryTarget:
+      #   backupID: ""
   externalClusters:
     - name: openbao-db
       plugin:
         name: barman-cloud.cloudnative-pg.io
         parameters:
           barmanObjectName: backup-store
-          serverName: openbao-db
+          serverName: openbao-db-dr-20260925b

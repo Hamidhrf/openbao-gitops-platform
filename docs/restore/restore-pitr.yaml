@@ -1,3 +1,12 @@
+# Point-in-time restore, reproducing the one tested on 23 September 2026.
+#
+# This example reads the original openbao-db catalogue generation on purpose. That
+# generation is frozen and is not the current writer. serverName and targetTime
+# belong together: do not replace only one of them. The current writer generation
+# begins after this target and cannot reach it.
+#
+# For a different point in time, choose the generation that covers it and set
+# targetTime to match. See docs/backup-restore.md.
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
