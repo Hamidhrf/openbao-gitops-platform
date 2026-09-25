@@ -84,6 +84,14 @@ Container hardening, as used in the spike: a non-root host user, all capabilitie
 
 `ScheduledBackup` and three instances are part of the PostgreSQL deployment. A store outage and a restore after rebuilding the cluster are planned failure tests.
 
+## Update, 25 September 2026
+
+Four of the items above have since been tested. `ScheduledBackup`, three instances and retention are part of the PostgreSQL deployment and have run daily since 23 September. WAL archiving caught up on its own after a store outage. A full restore after `kind delete cluster` was run as a rehearsal, and the store stayed up throughout the total loss of the Kubernetes cluster without being restarted.
+
+A restored cluster archiving under a new `serverName` turned out to be required rather than optional. CloudNativePG refuses to archive into a destination that already holds another cluster's backups, so every recovery opens a new catalogue generation and the one it read from is left frozen.
+
+Results are in docs/backup-restore.md and docs/disaster-recovery.md. RustFS, SeaweedFS, a non-root Versity user, versioning and object lock are still untested.
+
 ## Demo and production
 
 | | Demo | Production |
