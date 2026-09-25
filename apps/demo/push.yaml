@@ -1,0 +1,49 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: demo-client
+  namespace: demo
+spec:
+  secretName: demo-client-tls
+  commonName: demo-client
+  usages:
+    - digital signature
+    - key encipherment
+    - client auth
+  duration: 2160h
+  renewBeforePercentage: 33
+  privateKey:
+    algorithm: RSA
+    size: 2048
+    rotationPolicy: Always
+  issuerRef:
+    name: platform-ca
+    kind: ClusterIssuer
+    group: cert-manager.io
+---
+apiVersion: external-secrets.io/v1alpha1
+kind: PushSecret
+metadata:
+  name: demo-client
+  namespace: demo
+spec:
+  refreshInterval: 1h
+  updatePolicy: Replace
+  deletionPolicy: Delete
+  secretStoreRefs:
+    - kind: ClusterSecretStore
+      name: openbao-push
+  selector:
+    secret:
+      name: demo-client-tls
+  data:
+    - match:
+        secretKey: tls.crt
+        remoteRef:
+          remoteKey: pushed/demo/client
+          property: tls_crt
+    - match:
+        secretKey: tls.key
+        remoteRef:
+          remoteKey: pushed/demo/client
+          property: tls_key
