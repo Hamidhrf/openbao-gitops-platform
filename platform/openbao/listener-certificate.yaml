@@ -16,6 +16,8 @@ spec:
     - openbao-active.openbao.svc
     - openbao-active.openbao.svc.cluster.local
     - "*.openbao-internal.openbao.svc.cluster.local"
+    # External name (ADR-011), resolved through /etc/hosts on the VM.
+    - openbao.local.test
   usages:
     - digital signature
     - key encipherment

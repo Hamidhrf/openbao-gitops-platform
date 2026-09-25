@@ -12,6 +12,14 @@ networking:
 nodes:
   - role: control-plane
     image: kindest/node:v1.36.4@sha256:099e049362a1526b2db71494e1947aae99bd16290d7c895f2b7ea312e3cbfaed
+    # External access to OpenBao (ADR-011). containerPort must equal the
+    # node port of the openbao-external Service. Mapped on the control-plane
+    # node so that stopping a worker does not remove the endpoint.
+    extraPortMappings:
+      - containerPort: 30820
+        hostPort: 8200
+        listenAddress: "127.0.0.1"
+        protocol: TCP
   - role: worker
     image: kindest/node:v1.36.4@sha256:099e049362a1526b2db71494e1947aae99bd16290d7c895f2b7ea312e3cbfaed
   - role: worker

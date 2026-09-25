@@ -8,3 +8,4 @@ resources:
   - admin-serviceaccount.yaml
   - listener-certificate.yaml
   - release.yaml
+  - service-external.yaml
