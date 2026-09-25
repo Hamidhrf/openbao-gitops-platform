@@ -9,4 +9,3 @@ resources:
   - server-certificate.yaml
   - cluster.yaml
   - scheduled-backup.yaml
-  - backup-after-recovery.yaml

@@ -29,26 +29,11 @@ spec:
       dataDurability: required
       failoverQuorum: true
   bootstrap:
-    # Temporary: recover from the backup store after the loss of the
-    # cluster. Returns to initdb once the recovery is verified.
-    recovery:
-      source: openbao-db
+    initdb:
       database: openbao
       owner: openbao
       secret:
         name: openbao-db-credential
-      recoveryTarget:
-        # The base backup to start from, named explicitly rather than
-        # left to the newest in the catalogue. No recovery target is set,
-        # so recovery replays every archived segment and then promotes.
-        backupID: "20260925T020001"
-  externalClusters:
-    - name: openbao-db
-      plugin:
-        name: barman-cloud.cloudnative-pg.io
-        parameters:
-          barmanObjectName: backup-store
-          serverName: openbao-db
   plugins:
     - name: barman-cloud.cloudnative-pg.io
       isWALArchiver: true
@@ -56,6 +41,7 @@ spec:
         barmanObjectName: backup-store
         # A recovered cluster must not archive into the catalogue it
         # recovered from: CloudNativePG refuses to write into a non-empty
-        # archive and stays in Setting up primary. Each recovery therefore
-        # starts a new catalogue generation, named for the day it began.
+        # archive and stays in Setting up primary. The recovery of
+        # 25 September 2026 therefore opened this catalogue generation,
+        # and a later recovery would open the next one.
         serverName: openbao-db-dr-20260925b
