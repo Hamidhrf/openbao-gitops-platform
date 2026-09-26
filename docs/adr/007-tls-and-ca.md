@@ -46,7 +46,7 @@ Using `ca.crt` out of OpenBao's own listener Secret as the trust store for Postg
 
 The same CA signs the database server certificate and the OpenBao listener certificate. In production these would be separate intermediates.
 
-Renewal is configured but not exercised here. On the PostgreSQL side the `cnpg.io/reload` label is what makes a renewed certificate take effect. OpenBao reloads `tls_cert_file` and `tls_key_file` on SIGHUP, using the paths set at startup, which matters because a restart would leave its pods sealed.
+Renewal is configured but not exercised here. On the PostgreSQL side the `cnpg.io/reload` label is what makes a renewed certificate take effect. OpenBao reloads `tls_cert_file` and `tls_key_file` on SIGHUP, using the paths set at startup. With the static seal of ADR-008 a restarted pod unseals itself, so falling back to a restart costs a short outage rather than a sealed server.
 
 cert-manager is now a dependency of the database layer. Without it the server certificate is not issued and a rebuilt cluster does not start.
 

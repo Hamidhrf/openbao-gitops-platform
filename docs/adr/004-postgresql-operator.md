@@ -58,7 +58,7 @@ Not decided here: whether PostgreSQL and OpenBao share a namespace, which is dec
 - Quorum failover prefers consistency over availability: with two of three instances gone, the cluster stops accepting writes instead of promoting.
 - Rotating OpenBao's database password means updating the SOPS Secret and restarting OpenBao, because environment variables from a Secret do not change in a running pod.
 - Anyone who can create workloads in the database's namespace can mount its Secrets, including `ca.key`, so the namespace boundary matters.
-- No monitoring stack. The exporter on port 9187 and a PodMonitor are documented, not deployed.
+- No monitoring stack. Each instance serves the exporter on port 9187 and the operator serves its own on 8080, but nothing scrapes or retains them, and there is no PodMonitor. See docs/observability.md.
 
 ## References
 
