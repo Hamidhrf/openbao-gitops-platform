@@ -19,4 +19,5 @@ Approximate working time per task, including reading docs and debugging.
 | OpenBao version, configuration and HA deployment (ADR-009) | 5 h |
 | External Secrets and day-2 configuration (ADR-010) | 5 h |
 | Service exposure, cluster rebuild and disaster recovery rehearsal (ADR-011) | 8 h |
-| Total | 56.5 h |
+| Documentation: disaster recovery, observability, production readiness, evidence | 8 h |
+| Total | 64.5 h |

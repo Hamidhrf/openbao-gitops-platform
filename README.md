@@ -6,6 +6,8 @@ Goal: OpenBao in HA mode with an HA PostgreSQL backend, deployed with Flux, and 
 
 It runs on a local kind cluster with one control-plane node and three workers.
 
+Saved command output backing the claims below is in [Evidence](docs/evidence/). Which parts are production-ready and which are simplified for this demo is in [Production readiness](docs/production-readiness.md).
+
 ## Versions
 
 | Tool | Version |
@@ -327,6 +329,20 @@ Because the policies are rendered with an accessor discovered at run time, Git h
 
 A rebuild from Git restores the platform configuration, not the secrets an operator wrote: `secret/apps/demo/config` returns only from a database restore. The pushed certificate is different, because cert-manager generates a new one and External Secrets pushes it again, so what comes back there is a new credential rather than a recovered one.
 
+## Production readiness
+
+The platform runs on one VM, so several production concerns are simplified on purpose. The four that matter most:
+
+All four Kubernetes nodes are containers on one machine, with one control-plane node. A node failure here is a container failure, and losing the VM loses the whole cluster.
+
+The backup store runs on that same machine and disk, with no versioning and no object lock. One disk failure can take the cluster and the only copy of the backups together.
+
+The seal key and the bootstrap credentials are long-lived and kept in Git under SOPS. Someone holding the age identity and a database backup has what is needed to read the data. Production would unseal from a KMS or an HSM instead.
+
+No monitoring stack is deployed. Every component exposes metrics, but nothing collects, stores or alerts on them.
+
+The full list, what production would do instead and what each simplification costs are in [Production readiness](docs/production-readiness.md). What would be monitored, what to alert on and how this platform was troubleshot are in [Observability](docs/observability.md).
+
 ## Docs
 
 - [ADR-001: Local runtime environment](docs/adr/001-runtime-environment.md)
@@ -342,4 +358,7 @@ A rebuild from Git restores the platform configuration, not the secrets an opera
 - [ADR-011: Service exposure](docs/adr/011-service-exposure.md)
 - [Backup and restore](docs/backup-restore.md)
 - [Disaster recovery](docs/disaster-recovery.md)
+- [Observability](docs/observability.md)
+- [Production readiness](docs/production-readiness.md)
+- [Evidence](docs/evidence/)
 - [Time log](TIMELOG.md)
