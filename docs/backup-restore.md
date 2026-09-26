@@ -41,13 +41,14 @@ The rule that produces these generations, and the rehearsal that produced these 
 
 ## On-demand backup
 
-A one-off backup is an operation rather than desired state, so it is created directly instead of through Git:
+A one-off backup is a Kubernetes object like any other, so it goes through Git rather than being created by hand. Imperative commands are reserved for bootstrapping Flux, and the same object is part of the recovery procedure, where it is the step that makes a new catalogue generation recoverable.
 
-    kubectl --context kind-openbao-local create -f - <<'EOF'
+Commit a `Backup` under `platform/database/` and add it to that directory's `kustomization.yaml`:
+
     apiVersion: postgresql.cnpg.io/v1
     kind: Backup
     metadata:
-      generateName: openbao-db-manual-
+      name: openbao-db-manual
       namespace: database
     spec:
       method: plugin
@@ -55,9 +56,12 @@ A one-off backup is an operation rather than desired state, so it is created dir
         name: barman-cloud.cloudnative-pg.io
       cluster:
         name: openbao-db
-    EOF
+
+Push, then wait for it to complete:
 
     kubectl --context kind-openbao-local get backup -n database
+
+Remove it from Git in a following commit once it is Completed. Flux prunes the object and the base backup it produced stays in the store. The recovery on 25 September 2026 used exactly this pattern, in commits `744b37c` and `d5927a9`.
 
 ## Restore
 
