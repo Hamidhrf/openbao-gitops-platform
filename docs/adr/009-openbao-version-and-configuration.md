@@ -49,6 +49,17 @@ choice between a weaker and a stronger one. In 2.6.x, Integrated Storage
 supports standby reads and the PostgreSQL backend does not; that arrives for
 PostgreSQL in 2.7.0.
 
+Two of those costs are sharper than they look. OpenBao's availability now
+includes the database's: during the disaster recovery rehearsal the OpenBao
+pods crashlooped while PostgreSQL was being restored, then unsealed themselves
+once it returned, with no human step. And with this backend the servers decide
+which one is active through a row in `openbao_ha_locks`, not through Raft. The
+active node renews that row every five seconds and it expires after fifteen
+(ADR-004), so leadership is only as good as the connection to the database, and
+that is why one connection is kept free for the renewal query. I did not
+measure the latency the extra hop adds, so the performance side of this
+trade-off is reasoned rather than measured.
+
 ## Options for the version
 
 - Chart 0.29.6 with OpenBao 2.6.3, the pairing the chart ships and tests.
