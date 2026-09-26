@@ -1,0 +1,29 @@
+== run 2026-09-25T08:48:03Z
+NAME                          STATUS   ROLES           AGE   VERSION
+openbao-local-control-plane   Ready    control-plane   4d    v1.36.4
+openbao-local-worker          Ready    <none>          4d    v1.36.4
+openbao-local-worker2         Ready    <none>          4d    v1.36.4
+openbao-local-worker3         Ready    <none>          4d    v1.36.4
+NAME                AGE     READY   STATUS
+apps                93m     True    Applied revision: main@sha1:c0c020c695dde9cf28cb01528ed2db2ef3283a1c
+database            45h     True    Applied revision: main@sha1:c0c020c695dde9cf28cb01528ed2db2ef3283a1c
+flux-system         3d20h   True    Applied revision: main@sha1:c0c020c695dde9cf28cb01528ed2db2ef3283a1c
+infra-configs       41h     True    Applied revision: main@sha1:c0c020c695dde9cf28cb01528ed2db2ef3283a1c
+infra-controllers   47h     True    Applied revision: main@sha1:c0c020c695dde9cf28cb01528ed2db2ef3283a1c
+openbao             22h     True    Applied revision: main@sha1:c0c020c695dde9cf28cb01528ed2db2ef3283a1c
+openbao-config      9h      True    Applied revision: main@sha1:c0c020c695dde9cf28cb01528ed2db2ef3283a1c
+Initialized=True  Cluster has been bootstrapped
+ConsistentSystemID=True  A single, unique system ID was found across reporting instances.
+Ready=True  Cluster is Ready
+ContinuousArchiving=True  Continuous archiving is working
+LastBackupSucceeded=True  Backup was successful
+NAME                              METHOD   PHASE       STOPPED
+openbao-db-daily-20260923121130   plugin   completed   2026-09-23T12:12:05Z
+openbao-db-manual-czcq9           plugin   completed   2026-09-23T13:21:33Z
+openbao-db-daily-20260924020000   plugin   completed   2026-09-24T02:00:03Z
+openbao-db-daily-20260925020000   plugin   completed   2026-09-25T02:00:04Z
+status:
+  serverRecoveryWindow:
+    openbao-db:
+      firstRecoverabilityPoint: "2026-09-23T12:12:05Z"
+      lastSuccessfulBackupTime: "2026-09-25T02:00:04Z"

@@ -1,0 +1,103 @@
+== run 2026-09-24T13:01:49Z
+
+NAME        READY   STATUS    RESTARTS   AGE   IP            NODE                    NOMINATED NODE   READINESS GATES
+openbao-0   1/1     Running   0          26m   10.200.2.8    openbao-local-worker    <none>           <none>
+openbao-1   1/1     Running   0          26m   10.200.4.8    openbao-local-worker3   <none>           <none>
+openbao-2   1/1     Running   0          25m   10.200.1.12   openbao-local-worker2   <none>           <none>
+
+-- storage parameters
+2026-09-24T12:35:35.791Z [DEBUG] storage.postgresql: max_parallel set: max_parallel=16
+2026-09-24T12:35:35.791Z [DEBUG] storage.postgresql: transaction_max_parallel set: transaction_max_parallel=15
+2026-09-24T12:35:35.791Z [DEBUG] storage.postgresql: max_connect_retries set: max_connect_retries=50
+-- seal and init
+             Api Address: https://openbao-0.openbao-internal.openbao.svc.cluster.local:8200
+               Auto Seal: static (builtin: true, current_key_id: "20260924-1")
+         Cluster Address: https://openbao-0.openbao-internal.openbao.svc.cluster.local:8201
+2026-09-24T12:35:37.027Z [INFO]  core: acquired HA initialization lock
+2026-09-24T12:35:37.030Z [INFO]  core: security barrier initialized: shares=1 threshold=1
+-- self-init requests
+"id":"initialize[0].platform.request[0].enable-kubernetes-auth"
+"id":"initialize[0].platform.request[1].configure-kubernetes-auth"
+"id":"initialize[0].platform.request[2].create-admin-policy"
+"id":"initialize[0].platform.request[3].create-admin-role"
+"id":"initialize[0].platform.request[4].enable-userpass"
+"id":"initialize[0].platform.request[5].create-break-glass-user"
+"id":"self-init-revoke-root"
+-- status
+== openbao-0
+Key                      Value
+---                      -----
+Seal Type                static
+Recovery Seal Type       shamir
+Initialized              true
+Sealed                   false
+Total Recovery Shares    0
+Threshold                0
+Version                  2.6.3
+Commit Date              2026-09-23T16:41:56Z
+Storage Type             postgresql
+Cluster Name             vault-cluster-9994ae17
+Cluster ID               bb0c48ef-a111-564f-2ec0-7e93a6221254
+HA Enabled               true
+HA Cluster               https://openbao-0.openbao-internal.openbao.svc.cluster.local:8201
+HA Mode                  active
+Active Since             2026-09-24T12:35:38.129853036Z
+== openbao-1
+Key                      Value
+---                      -----
+Seal Type                static
+Recovery Seal Type       shamir
+Initialized              true
+Sealed                   false
+Total Recovery Shares    0
+Threshold                0
+Version                  2.6.3
+Commit Date              2026-09-23T16:41:56Z
+Storage Type             postgresql
+Cluster Name             vault-cluster-9994ae17
+Cluster ID               bb0c48ef-a111-564f-2ec0-7e93a6221254
+HA Enabled               true
+HA Cluster               https://openbao-0.openbao-internal.openbao.svc.cluster.local:8201
+HA Mode                  standby
+Active Node Address      https://openbao-0.openbao-internal.openbao.svc.cluster.local:8200
+== openbao-2
+Key                      Value
+---                      -----
+Seal Type                static
+Recovery Seal Type       shamir
+Initialized              true
+Sealed                   false
+Total Recovery Shares    0
+Threshold                0
+Version                  2.6.3
+Commit Date              2026-09-23T16:41:56Z
+Storage Type             postgresql
+Cluster Name             vault-cluster-9994ae17
+Cluster ID               bb0c48ef-a111-564f-2ec0-7e93a6221254
+HA Enabled               true
+HA Cluster               https://openbao-0.openbao-internal.openbao.svc.cluster.local:8201
+HA Mode                  standby
+Active Node Address      https://openbao-0.openbao-internal.openbao.svc.cluster.local:8200
+-- mounted files
+/openbao/userconfig/openbao-seal:
+total 0
+lrwxrwxrwx    1 root     openbao         15 Sep 24 12:35 seal.key -> ..data/seal.key
+
+/openbao/userconfig/openbao-tls:
+total 0
+lrwxrwxrwx    1 root     openbao         13 Sep 24 12:35 ca.crt -> ..data/ca.crt
+lrwxrwxrwx    1 root     openbao         14 Sep 24 12:35 tls.crt -> ..data/tls.crt
+lrwxrwxrwx    1 root     openbao         14 Sep 24 12:35 tls.key -> ..data/tls.key
+-- image
+openbao-0  quay.io/openbao/openbao:2.6.3@sha256:a60afafda36337abe833c4a63894bf1095098f29abea4091e7e555a33dd52889  quay.io/openbao/openbao@sha256:a60afafda36337abe833c4a63894bf1095098f29abea4091e7e555a33dd52889
+openbao-1  quay.io/openbao/openbao:2.6.3@sha256:a60afafda36337abe833c4a63894bf1095098f29abea4091e7e555a33dd52889  quay.io/openbao/openbao@sha256:a60afafda36337abe833c4a63894bf1095098f29abea4091e7e555a33dd52889
+openbao-2  quay.io/openbao/openbao:2.6.3@sha256:a60afafda36337abe833c4a63894bf1095098f29abea4091e7e555a33dd52889  quay.io/openbao/openbao@sha256:a60afafda36337abe833c4a63894bf1095098f29abea4091e7e555a33dd52889
+
+-- active service
+NAME        READY   STATUS    RESTARTS   AGE   OPENBAO-ACTIVE
+openbao-0   1/1     Running   0          26m   true
+openbao-1   1/1     Running   0          26m   false
+openbao-2   1/1     Running   0          25m   false
+Warning: v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+NAME             ENDPOINTS                         AGE
+openbao-active   10.200.2.8:8201,10.200.2.8:8200   26m

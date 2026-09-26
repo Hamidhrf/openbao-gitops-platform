@@ -1,0 +1,23 @@
+== run 2026-09-26T13:33:38Z
+
+--- git source
+NAME       	REVISION          	SUSPENDED	READY	MESSAGE                                           
+flux-system	main@sha1:99ca7c2e	False    	True 	stored artifact for revision 'main@sha1:99ca7c2e'	
+
+--- kustomizations
+NAME             	REVISION          	SUSPENDED	READY	MESSAGE                              
+apps             	main@sha1:99ca7c2e	False    	True 	Applied revision: main@sha1:99ca7c2e	
+database         	main@sha1:99ca7c2e	False    	True 	Applied revision: main@sha1:99ca7c2e	
+flux-system      	main@sha1:99ca7c2e	False    	True 	Applied revision: main@sha1:99ca7c2e	
+infra-configs    	main@sha1:99ca7c2e	False    	True 	Applied revision: main@sha1:99ca7c2e	
+infra-controllers	main@sha1:99ca7c2e	False    	True 	Applied revision: main@sha1:99ca7c2e	
+openbao          	main@sha1:99ca7c2e	False    	True 	Applied revision: main@sha1:99ca7c2e	
+openbao-config   	main@sha1:99ca7c2e	False    	True 	Applied revision: main@sha1:99ca7c2e	
+
+--- helm releases
+NAMESPACE       	NAME               	REVISION           	SUSPENDED	READY	MESSAGE                                                                                                     
+cert-manager    	cert-manager       	1.21.2+634dce9c13b5	False    	True 	Helm install succeeded for release cert-manager/cert-manager.v1 with chart cert-manager@1.21.2+634dce9c13b5	
+cnpg-system     	cnpg               	0.29.0             	False    	True 	Helm install succeeded for release cnpg-system/cnpg.v1 with chart cloudnative-pg@0.29.0                    	
+cnpg-system     	plugin-barman-cloud	0.8.0              	False    	True 	Helm install succeeded for release cnpg-system/plugin-barman-cloud.v1 with chart plugin-barman-cloud@0.8.0 	
+external-secrets	external-secrets   	2.11.0             	False    	True 	Helm install succeeded for release external-secrets/external-secrets.v1 with chart external-secrets@2.11.0 	
+openbao         	openbao            	0.29.6             	False    	True 	Helm install succeeded for release openbao/openbao.v1 with chart openbao@0.29.6                            	

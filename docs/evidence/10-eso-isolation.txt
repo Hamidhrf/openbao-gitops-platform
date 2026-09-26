@@ -1,0 +1,44 @@
+== run 2026-09-25T08:02:35Z
+== control 1: the pull identity without the openbao audience
+Error writing data to auth/kubernetes/login: Error making API request.
+
+URL: PUT https://openbao-active.openbao.svc:8200/v1/auth/kubernetes/login
+Code: 403. Errors:
+
+* invalid audience (aud) claim: audience claim does not match any expected audience
+exit=2
+== control 2: the pull identity writing to the push path and reading another namespace
+-- read own path, expected to succeed
+hello-again-from-openbaoexit=0
+-- write to the push path, expected 403
+Error writing data to secret/data/pushed/demo/client: Error making API request.
+
+URL: PUT https://openbao-active.openbao.svc:8200/v1/secret/data/pushed/demo/client
+Code: 403. Errors:
+
+* 1 error occurred:
+	* permission denied
+
+
+exit=2
+-- read another namespace path, expected 403
+Error reading secret/data/apps/other/config: Error making API request.
+
+URL: GET https://openbao-active.openbao.svc:8200/v1/secret/data/apps/other/config
+Code: 403. Errors:
+
+* 1 error occurred:
+	* permission denied
+
+
+exit=2
+Error revoking token: Error making API request.
+
+URL: PUT https://openbao-active.openbao.svc:8200/v1/auth/token/revoke-self
+Code: 403. Errors:
+
+* 1 error occurred:
+	* permission denied
+
+
+command terminated with exit code 2

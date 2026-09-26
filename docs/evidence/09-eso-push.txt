@@ -1,0 +1,71 @@
+== run 2026-09-25T07:47:07Z
+== what exists under the two prefixes
+Keys
+----
+config
+Keys
+----
+client
+== pushed secret, keys and metadata only
+-----BEGIN CERTIFICATE-----
+========== Metadata Path ==========
+secret/metadata/pushed/demo/client
+
+============ Metadata ============
+Key                         Value
+---                         -----
+cas_required                false
+created_time                2026-09-25T07:16:42.65685388Z
+current_metadata_version    2
+current_version             2
+custom_metadata             map[managed-by:external-secrets]
+delete_version_after        0s
+max_versions                0
+metadata_cas_required       false
+oldest_version              0
+updated_time                2026-09-25T07:16:42.669570557Z
+
+====== Version 1 ======
+Key              Value
+---              -----
+created_time     2026-09-25T07:16:42.660208633Z
+deletion_time    n/a
+destroyed        false
+
+====== Version 2 ======
+Key              Value
+---              -----
+created_time     2026-09-25T07:16:42.669570557Z
+deletion_time    n/a
+destroyed        false
+== the pull secret has no ESO marker
+========= Metadata Path =========
+secret/metadata/apps/demo/config
+
+============ Metadata ============
+Key                         Value
+---                         -----
+cas_required                false
+created_time                2026-09-24T23:43:42.775116184Z
+current_metadata_version    0
+current_version             2
+custom_metadata             <nil>
+delete_version_after        0s
+max_versions                0
+metadata_cas_required       false
+oldest_version              0
+updated_time                2026-09-25T07:42:29.569464463Z
+
+====== Version 1 ======
+Key              Value
+---              -----
+created_time     2026-09-24T23:43:42.775116184Z
+deletion_time    n/a
+destroyed        false
+
+====== Version 2 ======
+Key              Value
+---              -----
+created_time     2026-09-25T07:42:29.569464463Z
+deletion_time    n/a
+destroyed        false

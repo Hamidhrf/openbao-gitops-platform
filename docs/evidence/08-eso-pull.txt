@@ -1,0 +1,29 @@
+======== Secret Path ========
+secret/data/apps/demo/config
+
+======= Metadata =======
+Key                Value
+---                -----
+created_time       2026-09-25T07:42:29.569464463Z
+custom_metadata    <nil>
+deletion_time      n/a
+destroyed          false
+version            2
+== sampling from 2026-09-25T07:42:39Z
+2026-09-25T07:42:39Z 2026-09-25T07:42:36Z message=hello-from-openbao greeting=guten-tag
+2026-09-25T07:42:54Z 2026-09-25T07:42:46Z message=hello-from-openbao greeting=guten-tag
+2026-09-25T07:43:09Z 2026-09-25T07:43:06Z message=hello-again-from-openbao greeting=guten-morgen
+2026-09-25T07:43:24Z 2026-09-25T07:43:16Z message=hello-again-from-openbao greeting=guten-morgen
+2026-09-25T07:43:39Z 2026-09-25T07:43:36Z message=hello-again-from-openbao greeting=guten-morgen
+2026-09-25T07:43:54Z 2026-09-25T07:43:46Z message=hello-again-from-openbao greeting=guten-morgen
+2026-09-25T07:44:09Z 2026-09-25T07:44:06Z message=hello-again-from-openbao greeting=guten-morgen
+2026-09-25T07:44:24Z 2026-09-25T07:44:16Z message=hello-again-from-openbao greeting=guten-morgen
+2026-09-25T07:44:39Z 2026-09-25T07:44:36Z message=hello-again-from-openbao greeting=guten-morgen
+2026-09-25T07:44:55Z 2026-09-25T07:44:46Z message=hello-again-from-openbao greeting=guten-morgen
+2026-09-25T07:45:10Z 2026-09-25T07:45:06Z message=hello-again-from-openbao greeting=guten-morgen
+2026-09-25T07:45:25Z 2026-09-25T07:45:16Z message=hello-again-from-openbao greeting=guten-morgen
+== pod identity after the change
+NAME                    START                  RESTARTS
+demo-5bfdd5dc4d-8j6cw   2026-09-25T07:16:41Z   0
+NAME          STORETYPE            STORE          REFRESH INTERVAL   STATUS         READY   LAST SYNC
+demo-config   ClusterSecretStore   openbao-pull   1m                 SecretSynced   True    59s

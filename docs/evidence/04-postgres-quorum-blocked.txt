@@ -1,0 +1,97 @@
+13:00:43Z openbao-db   49m   3     3     Cluster in healthy state   openbao-db-1
+13:00:48Z openbao-db   49m   3     3     Cluster in healthy state   openbao-db-1
+13:00:53Z openbao-db   49m   3     3     Cluster in healthy state   openbao-db-1
+13:00:58Z openbao-db   49m   3     3     Cluster in healthy state   openbao-db-1
+13:01:03Z openbao-db   49m   3     3     Cluster in healthy state   openbao-db-1
+13:01:08Z openbao-db   49m   3     3     Cluster in healthy state   openbao-db-1
+13:01:13Z openbao-db   49m   3     3     Cluster in healthy state   openbao-db-1
+13:01:18Z openbao-db   49m   3     3     Cluster in healthy state   openbao-db-1
+13:01:23Z openbao-db   49m   3     3     Cluster in healthy state   openbao-db-1
+13:01:28Z openbao-db   49m   3     3     Cluster in healthy state   openbao-db-1
+13:01:34Z openbao-db   50m   3     3     Cluster in healthy state   openbao-db-1
+13:01:39Z openbao-db   50m   3     3     Cluster in healthy state   openbao-db-1
+13:01:44Z openbao-db   50m   3     3     Cluster in healthy state   openbao-db-1
+13:01:49Z openbao-db   50m   3     3     Cluster in healthy state   openbao-db-1
+13:01:54Z openbao-db   50m   3     3     Cluster in healthy state   openbao-db-1
+13:01:59Z openbao-db   50m   3     3     Cluster in healthy state   openbao-db-1
+13:02:04Z openbao-db   50m   3     3     Cluster in healthy state   openbao-db-1
+13:02:09Z openbao-db   50m   3     3     Cluster in healthy state   openbao-db-1
+13:02:14Z openbao-db   50m   3     3     Cluster in healthy state   openbao-db-1
+13:02:19Z openbao-db   50m   3     3     Cluster in healthy state   openbao-db-1
+13:02:24Z openbao-db   50m   3     3     Cluster in healthy state   openbao-db-1
+13:02:29Z openbao-db   50m   3     3     Cluster in healthy state   openbao-db-1
+13:02:34Z openbao-db   51m   3     3     Cluster in healthy state   openbao-db-1
+13:02:39Z openbao-db   51m   3     3     Cluster in healthy state   openbao-db-1
+13:02:44Z openbao-db   51m   3     3     Cluster in healthy state   openbao-db-1
+13:02:49Z openbao-db   51m   3     3     Cluster in healthy state   openbao-db-1
+13:02:54Z openbao-db   51m   3     3     Cluster in healthy state   openbao-db-1
+13:03:00Z openbao-db   51m   3     3     Cluster in healthy state   openbao-db-1
+13:03:05Z openbao-db   51m   3     3     Cluster in healthy state   openbao-db-1
+13:03:10Z openbao-db   51m   3     3     Cluster in healthy state   openbao-db-1
+13:03:15Z openbao-db   51m   3     3     Cluster in healthy state   openbao-db-1
+13:03:20Z openbao-db   51m   3     3     Cluster in healthy state   openbao-db-1
+13:03:25Z openbao-db   51m   3     3     Cluster in healthy state   openbao-db-1
+13:03:30Z openbao-db   52m   3     3     Cluster in healthy state   openbao-db-1
+13:03:35Z openbao-db   52m   3     3     Cluster in healthy state   openbao-db-1
+13:03:40Z openbao-db   52m   3     3     Cluster in healthy state   openbao-db-1
+13:03:45Z openbao-db   52m   3     3     Cluster in healthy state   openbao-db-1
+13:03:50Z openbao-db   52m   3     3     Cluster in healthy state   openbao-db-1
+13:03:55Z openbao-db   52m   3     3     Cluster in healthy state   openbao-db-1
+13:04:00Z openbao-db   52m   3     3     Cluster in healthy state   openbao-db-1
+13:04:05Z openbao-db   52m   3     3     Cluster in healthy state   openbao-db-1
+13:04:10Z openbao-db   52m   3     3     Cluster in healthy state   openbao-db-1
+13:04:15Z openbao-db   52m   3     3     Cluster in healthy state   openbao-db-1
+13:04:20Z openbao-db   52m   3     3     Cluster in healthy state   openbao-db-1
+13:04:26Z openbao-db   52m   3     3     Cluster in healthy state   openbao-db-1
+13:04:31Z openbao-db   53m   3     3     Cluster in healthy state   openbao-db-1
+13:04:36Z openbao-db   53m   3     3     Cluster in healthy state   openbao-db-1
+13:04:41Z openbao-db   53m   3     3     Cluster in healthy state   openbao-db-1
+13:04:46Z openbao-db   53m   3     3     Cluster in healthy state   openbao-db-1
+13:04:51Z openbao-db   53m   3     3     Cluster in healthy state   openbao-db-1
+13:04:56Z openbao-db   53m   3     3     Cluster in healthy state   openbao-db-1
+13:05:01Z openbao-db   53m   3     3     Cluster in healthy state   openbao-db-1
+13:05:06Z openbao-db   53m   3     3     Cluster in healthy state   openbao-db-1
+13:05:11Z openbao-db   53m   3     3     Cluster in healthy state   openbao-db-1
+13:05:16Z openbao-db   53m   3     3     Cluster in healthy state   openbao-db-1
+13:05:21Z openbao-db   53m   3     3     Cluster in healthy state   openbao-db-1
+13:05:26Z openbao-db   53m   3     3     Cluster in healthy state   openbao-db-1
+13:05:31Z openbao-db   54m   3     3     Cluster in healthy state   openbao-db-1
+13:05:36Z openbao-db   54m   3     3     Cluster in healthy state   openbao-db-1
+13:05:41Z openbao-db   54m   3     3     Cluster in healthy state   openbao-db-1
+13:05:47Z openbao-db   54m   3     3     Cluster in healthy state   openbao-db-1
+13:05:52Z openbao-db   54m   3     3     Cluster in healthy state   openbao-db-1
+13:05:57Z openbao-db   54m   3     3     Cluster in healthy state   openbao-db-1
+13:06:02Z openbao-db   54m   3     3     Cluster in healthy state   openbao-db-1
+13:06:07Z openbao-db   54m   3     3     Cluster in healthy state   openbao-db-1
+13:06:12Z openbao-db   54m   3     3     Cluster in healthy state   openbao-db-1
+13:06:17Z openbao-db   54m   3     3     Cluster in healthy state   openbao-db-1
+13:06:22Z openbao-db   54m   3     3     Cluster in healthy state   openbao-db-1
+13:06:27Z openbao-db   54m   3     3     Cluster in healthy state   openbao-db-1
+13:06:32Z openbao-db   55m   3     3     Cluster cannot proceed to reconciliation due to an error while interacting with plugins   openbao-db-1
+13:06:37Z openbao-db   55m   3     3     Cluster cannot proceed to reconciliation due to an error while interacting with plugins   openbao-db-1
+13:06:42Z openbao-db   55m   3     3     Cluster cannot proceed to reconciliation due to an error while interacting with plugins   openbao-db-1
+13:06:47Z openbao-db   55m   3     1     Waiting for the instances to become active   openbao-db-1
+13:06:52Z openbao-db   55m   3     1     Waiting for the instances to become active   openbao-db-1
+13:06:57Z openbao-db   55m   3     1     Waiting for the instances to become active   openbao-db-1
+== quorum blocked 2026-09-23T13:10:35Z
+NAME                          STATUS     ROLES           AGE    VERSION
+openbao-local-control-plane   Ready      control-plane   2d4h   v1.36.4
+openbao-local-worker          NotReady   <none>          2d4h   v1.36.4
+openbao-local-worker2         Ready      <none>          2d4h   v1.36.4
+openbao-local-worker3         NotReady   <none>          2d4h   v1.36.4
+NAME         AGE   INSTANCES   READY   STATUS                                       PRIMARY
+openbao-db   59m   3           1       Waiting for the instances to become active   openbao-db-1
+NAME           READY   STATUS        RESTARTS   AGE   IP           NODE                    NOMINATED NODE   READINESS GATES
+openbao-db-1   2/2     Terminating   0          30m   10.200.4.6   openbao-local-worker3   <none>           <none>
+openbao-db-2   2/2     Running       0          12m   10.200.1.2   openbao-local-worker2   <none>           <none>
+openbao-db-3   2/2     Terminating   0          57m   10.200.2.9   openbao-local-worker    <none>           <none>
+  uid: 7847db5d-62b4-47eb-ba71-636c8284365a
+status:
+  method: ANY
+  primary: openbao-db-1
+  standbyNames:
+  - openbao-db-2
+  - openbao-db-3
+  standbyNumber: 1
+{"level":"info","ts":"2026-09-23T13:10:35.424722251Z","msg":"Quorum check algorithm results","controller":"cluster","controllerGroup":"postgresql.cnpg.io","controllerKind":"Cluster","Cluster":{"name":"openbao-db","namespace":"database"},"namespace":"database","name":"openbao-db","reconcileID":"84585fbb-91c1-43c0-9f17-5f62a8978c0c","tag":"quorumCheck","isStronglyConsistent":false,"readSetCardinality":1,"readSet":["openbao-db-2"],"writeSetCardinality":1,"nodeSet":["openbao-db-2","openbao-db-3"],"nodeSetCardinality":2}
+{"level":"info","ts":"2026-09-23T13:10:35.424742279Z","msg":"Strong consistency check failed. Preventing failover.","controller":"cluster","controllerGroup":"postgresql.cnpg.io","controllerKind":"Cluster","Cluster":{"name":"openbao-db","namespace":"database"},"namespace":"database","name":"openbao-db","reconcileID":"84585fbb-91c1-43c0-9f17-5f62a8978c0c","tag":"quorumCheck"}

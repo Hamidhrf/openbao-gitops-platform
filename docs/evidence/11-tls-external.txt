@@ -1,0 +1,25 @@
+== run 2026-09-25T14:18:17Z
+--- checkpoint 8: TLS through the host port
+{"initialized":true,"sealed":false,"standby":false,"replication_performance_mode":"primary","replication_dr_mode":"disabled","server_time_utc":1790345897,"version":"2.6.3","cluster_name":"vault-cluster-9994ae17","cluster_id":"bb0c48ef-a111-564f-2ec0-7e93a6221254"}
+
+http=200 verify=0
+--- negative control: no CA
+curl: (60) SSL certificate problem: unable to get local issuer certificate
+More details here: https://curl.se/docs/sslcerts.html
+
+curl failed to verify the legitimacy of the server and therefore could not
+establish a secure connection to it. To learn more about this situation and
+how to fix it, please visit the web page mentioned above.
+http=000
+curl exit=60
+--- negative control: wrong name, same endpoint
+curl: (60) SSL: no alternative certificate subject name matches target host name '127.0.0.1'
+More details here: https://curl.se/docs/sslcerts.html
+
+curl failed to verify the legitimacy of the server and therefore could not
+establish a secure connection to it. To learn more about this situation and
+how to fix it, please visit the web page mentioned above.
+http=000
+curl exit=60
+--- which pod answered
+openbao-0

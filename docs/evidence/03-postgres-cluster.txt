@@ -1,0 +1,14 @@
+== run 2026-09-23T12:19:56Z
+NAME         AGE     INSTANCES   READY   STATUS                     PRIMARY
+openbao-db   8m26s   3           3       Cluster in healthy state   openbao-db-1
+NAME           READY   STATUS    RESTARTS   AGE     IP           NODE                    NOMINATED NODE   READINESS GATES
+openbao-db-1   2/2     Running   0          8m9s    10.200.4.5   openbao-local-worker3   <none>           <none>
+openbao-db-2   2/2     Running   0          7m42s   10.200.1.8   openbao-local-worker2   <none>           <none>
+openbao-db-3   2/2     Running   0          7m15s   10.200.2.9   openbao-local-worker    <none>           <none>
+Initialized=True ConsistentSystemID=True Ready=True ContinuousArchiving=True LastBackupSucceeded=True 
+NAME                                           AGE
+failoverquorum.postgresql.cnpg.io/openbao-db   8m26s
+
+NAME                                                        AGE     CLUSTER      METHOD   PHASE       ERROR
+backup.postgresql.cnpg.io/openbao-db-daily-20260923121130   8m26s   openbao-db   plugin   completed   
+{"serverRecoveryWindow":{"openbao-db":{"firstRecoverabilityPoint":"2026-09-23T12:12:05Z","lastSuccessfulBackupTime":"2026-09-23T12:12:05Z"}}}

@@ -1,0 +1,30 @@
+2026-09-21T10:40:58+02:00
+
+NAME                          STATUS   ROLES           AGE     VERSION   INTERNAL-IP   EXTERNAL-IP   OS-IMAGE                       KERNEL-VERSION             CONTAINER-RUNTIME
+openbao-local-control-plane   Ready    control-plane   5m56s   v1.36.4   172.18.0.4    <none>        Debian GNU/Linux 13 (trixie)   7.0.0-28-generic (amd64)   containerd://2.3.4
+openbao-local-worker          Ready    <none>          5m41s   v1.36.4   172.18.0.5    <none>        Debian GNU/Linux 13 (trixie)   7.0.0-28-generic (amd64)   containerd://2.3.4
+openbao-local-worker2         Ready    <none>          5m41s   v1.36.4   172.18.0.3    <none>        Debian GNU/Linux 13 (trixie)   7.0.0-28-generic (amd64)   containerd://2.3.4
+openbao-local-worker3         Ready    <none>          5m41s   v1.36.4   172.18.0.2    <none>        Debian GNU/Linux 13 (trixie)   7.0.0-28-generic (amd64)   containerd://2.3.4
+
+NAME                          TAINTS                                  EFFECT       PODCIDR
+openbao-local-control-plane   node-role.kubernetes.io/control-plane   NoSchedule   10.200.0.0/24
+openbao-local-worker          <none>                                  <none>       10.200.2.0/24
+openbao-local-worker2         <none>                                  <none>       10.200.1.0/24
+openbao-local-worker3         <none>                                  <none>       10.200.4.0/24
+
+NAMESPACE            NAME                                                  READY   STATUS    RESTARTS   AGE     IP           NODE                          NOMINATED NODE   READINESS GATES
+kube-system          coredns-589f44dc88-d9tcm                              1/1     Running   0          5m46s   10.200.0.4   openbao-local-control-plane   <none>           <none>
+kube-system          coredns-589f44dc88-pwl42                              1/1     Running   0          5m46s   10.200.0.2   openbao-local-control-plane   <none>           <none>
+kube-system          etcd-openbao-local-control-plane                      1/1     Running   0          5m53s   172.18.0.4   openbao-local-control-plane   <none>           <none>
+kube-system          kindnet-54rs7                                         1/1     Running   0          5m41s   172.18.0.3   openbao-local-worker2         <none>           <none>
+kube-system          kindnet-c2x78                                         1/1     Running   0          5m41s   172.18.0.2   openbao-local-worker3         <none>           <none>
+kube-system          kindnet-lxfpt                                         1/1     Running   0          5m46s   172.18.0.4   openbao-local-control-plane   <none>           <none>
+kube-system          kindnet-tflhr                                         1/1     Running   0          5m41s   172.18.0.5   openbao-local-worker          <none>           <none>
+kube-system          kube-apiserver-openbao-local-control-plane            1/1     Running   0          5m53s   172.18.0.4   openbao-local-control-plane   <none>           <none>
+kube-system          kube-controller-manager-openbao-local-control-plane   1/1     Running   0          5m53s   172.18.0.4   openbao-local-control-plane   <none>           <none>
+kube-system          kube-proxy-4w6xr                                      1/1     Running   0          5m41s   172.18.0.3   openbao-local-worker2         <none>           <none>
+kube-system          kube-proxy-7lzx6                                      1/1     Running   0          5m41s   172.18.0.2   openbao-local-worker3         <none>           <none>
+kube-system          kube-proxy-qmrcw                                      1/1     Running   0          5m46s   172.18.0.4   openbao-local-control-plane   <none>           <none>
+kube-system          kube-proxy-xtq8n                                      1/1     Running   0          5m41s   172.18.0.5   openbao-local-worker          <none>           <none>
+kube-system          kube-scheduler-openbao-local-control-plane            1/1     Running   0          5m53s   172.18.0.4   openbao-local-control-plane   <none>           <none>
+local-path-storage   local-path-provisioner-56c4685b7c-5qf8m               1/1     Running   0          5m46s   10.200.0.3   openbao-local-control-plane   <none>           <none>

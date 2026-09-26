@@ -1,0 +1,62 @@
+== run 2026-09-25T13:43:45Z
+Key                      Value
+---                      -----
+Seal Type                static
+Recovery Seal Type       shamir
+Initialized              true
+Sealed                   false
+Total Recovery Shares    0
+Threshold                0
+Version                  2.6.3
+Commit Date              2026-09-23T16:41:56Z
+Storage Type             postgresql
+Cluster Name             vault-cluster-9994ae17
+Cluster ID               bb0c48ef-a111-564f-2ec0-7e93a6221254
+HA Enabled               true
+HA Cluster               https://openbao-0.openbao-internal.openbao.svc.cluster.local:8201
+HA Mode                  active
+Active Since             2026-09-25T13:42:31.953085869Z
+--- mount uuid, expect 3d139a4e-970b-4dde-99cc-5ddefdb656a9
+3d139a4e-970b-4dde-99cc-5ddefdb656a9
+--- accessor, expect auth_kubernetes_58b82928
+auth_kubernetes_58b82928
+--- policies
+admin
+default
+eso-pull
+eso-push
+root
+--- roles
+Keys
+----
+admin
+eso-pull
+eso-push
+--- pull metadata, expect created 2026-09-24T23:43:42
+Key                         Value
+---                         -----
+cas_required                false
+created_time                2026-09-24T23:43:42.775116184Z
+current_metadata_version    0
+current_version             2
+custom_metadata             <nil>
+delete_version_after        0s
+max_versions                0
+metadata_cas_required       false
+oldest_version              0
+updated_time                2026-09-25T07:42:29.569464463Z
+versions                    map[1:map[created_time:2026-09-24T23:43:42.775116184Z deletion_time: destroyed:false] 2:map[created_time:2026-09-25T07:42:29.569464463Z deletion_time: destroyed:false]]
+--- push metadata, expect created 2026-09-25T08:17:58
+Key                         Value
+---                         -----
+cas_required                false
+created_time                2026-09-25T08:17:58.207838898Z
+current_metadata_version    2
+current_version             2
+custom_metadata             map[managed-by:external-secrets]
+delete_version_after        0s
+max_versions                0
+metadata_cas_required       false
+oldest_version              0
+updated_time                2026-09-25T08:17:58.221216743Z
+versions                    map[1:map[created_time:2026-09-25T08:17:58.211163665Z deletion_time: destroyed:false] 2:map[created_time:2026-09-25T08:17:58.221216743Z deletion_time: destroyed:false]]
