@@ -8,7 +8,7 @@ OpenBao encrypts everything it stores with a root key, and that root key is itse
 
 The default seal is Shamir, which splits an unseal key into shares and requires an operator to present enough of them to every node after every start. Three replicas run here, and pods restart for ordinary reasons: a node failure, a rolling update, a database password rotation, a rebuild from Git.
 
-The ESO spike on 21 September 2026 showed what a sealed OpenBao does to the rest of the platform. Logins return 503, existing Secrets keep their last value, ExternalSecrets fail on their next refresh, and syncing resumed about five minutes after unsealing without a manual nudge.
+The ESO spike on 21 September 2026 showed what a sealed OpenBao does to the rest of the platform. Logins return 503, existing Secrets keep their last value, ExternalSecrets fail on their next refresh, and syncing resumed about five minutes after unsealing without any manual step.
 
 The task requires that bootstrap secrets are not stored in OpenBao, to avoid a circular dependency, and are managed with GitOps or SOPS instead. ADR-002 already established SOPS with age for exactly that.
 
@@ -34,7 +34,7 @@ The stanza carries only what has to exist before anything else can work: an audi
 
 Administration is a login, not a stored token. The normal path is a short-lived token for a dedicated ServiceAccount in the `openbao` namespace that no application runs as, with the auth role bound to its name, namespace and audience. The break-glass account exists for the case where a bad policy change breaks the Kubernetes path, is never used for routine work, and keeps a short token lifetime. Neither identity uses the built-in `root` policy.
 
-The chart's default pod management policy is kept rather than starting the three pods together, so the first start is serialised.
+I keep the chart's default pod management policy, which starts the three pods one after another instead of together.
 
 ## Limitations
 

@@ -30,7 +30,7 @@ One private CA for the platform, managed by cert-manager, which is already insta
 
 A self-signed ClusterIssuer issues the root certificate `platform-ca` into the `cert-manager` namespace, and a CA ClusterIssuer signs with it. cert-manager runs with `--cluster-resource-namespace=$(POD_NAMESPACE)`, so the ClusterIssuer reads that Secret from `cert-manager` and the signing key never leaves it.
 
-The root is RSA 4096, valid for five years, with automatic renewal turned off (`renewal.policy: Disabled`), because replacing a trust anchor needs a planned rollover and not a surprise. Leaf certificates are RSA 2048, valid for 90 days, renewed when a third of their lifetime is left, with a new private key on every renewal.
+The root is RSA 4096, valid for five years, with automatic renewal turned off (`renewal.policy: Disabled`), because replacing the root certificate has to be planned and must not happen by itself. Leaf certificates are RSA 2048, valid for 90 days, renewed when a third of their lifetime is left, with a new private key on every renewal.
 
 The PostgreSQL server certificate is a Certificate in the `database` namespace with `CN=openbao-db-rw` and the same twelve names the operator generated. The Cluster references its Secret as both `serverTLSSecret` and `serverCASecret`; `ca.key` is not needed there because the server certificate is supplied. The Secret carries the label `cnpg.io/reload: ""` through `secretTemplate`, so the instances pick up a renewed certificate without `kubectl cnpg reload`. CloudNativePG keeps its own CA for the client and replication certificates.
 

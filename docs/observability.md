@@ -5,10 +5,12 @@
 No monitoring backend is deployed. There is no Prometheus, no Grafana, no alert manager and no log
 store. That is a demo simplification, not a statement that these signals do not matter.
 
-This document has four parts. An inventory of what the platform exposes today, measured rather than
-assumed. The signals production would collect. The conditions worth alerting on, each with the reason
-the obvious version of that alert is wrong. And the troubleshooting routes that were actually used to
-run and debug this platform, including during its failure tests.
+This document has four parts:
+
+- what the platform exposes today, measured rather than assumed;
+- the signals production would collect;
+- the alerts worth having, each with the mistake that is easy to make;
+- the troubleshooting steps that were used on this platform, including during the failure tests.
 
 Measurements are from 26 September 2026 on the running cluster unless another date is given.
 
@@ -53,8 +55,8 @@ statistics on the primary, which is `openbao-db-1` here:
     kubectl --context kind-openbao-local -n database exec openbao-db-1 -c postgres -- \
         psql -U postgres -d openbao -c "select last_archived_wal, archived_count, last_failed_wal, failed_count from pg_stat_archiver;"
 
-The `ObjectStore` status carries the oldest and newest recoverability points, which is the real answer
-to how far back a restore can reach.
+The `ObjectStore` status shows the oldest and newest recoverability points, which tells how far back
+a restore can reach.
 
 ### OpenBao
 
@@ -106,7 +108,7 @@ here rather than a background detail.
 | Alert on | Trap |
 |---|---|
 | No unsealed active OpenBao answering for several minutes | A pod that is Running and Ready is not necessarily usable. The chart Services set `publishNotReadyAddresses: true`, so a sealed server stays addressable. |
-| Any pod reporting `openbao-sealed=true`, or no pod reporting `openbao-active=true` | These labels are written by the pod itself, so they report only what a living pod can report. A killed pod keeps its last labels, and that is exactly how a dead server kept `openbao-active=true` for about 50 seconds during the node kill test. |
+| Any pod reporting `openbao-sealed=true`, or no pod reporting `openbao-active=true` | These labels are written by the pod itself, so they report only what a living pod can report. A killed pod keeps its last labels. That is how a dead server kept `openbao-active=true` for about 50 seconds during the node kill test. |
 | Repeated OpenBao leadership transitions | One failover is normal behaviour, not an incident. Alert on the rate, not on a single change. |
 | External `/v1/sys/health` failing from outside the cluster | A healthy new leader can coexist with a stale endpoint. After a node kill this was measured at about 52 seconds, because the active label is set by the pod on itself and a dead pod cannot clear it. |
 | Cluster `Ready=False`, or fewer than three healthy instances, sustained | A primary failover takes about a second and is expected. Alert on persistence, not on the event. |
@@ -150,16 +152,15 @@ stopped reaching it.
 
 Read the pod labels first: they show which servers are sealed and which is active, without a token and
 without reaching the API. Then check whether the seal key Secret exists and whether the pod can read
-it, then the server log for the unseal line, then the storage backend. OpenBao unseals from the stored key with no human step, so a
-server that stays sealed usually means the seal key or the database is unavailable rather than that a
-key is missing.
+it, then the server log for the unseal line, then the storage backend. OpenBao unseals itself from the
+stored key with no human step. So a server that stays sealed usually cannot read the seal key file or
+cannot reach the database.
 
 ### PostgreSQL is degraded
 
 Check the Cluster conditions, then which instances are ready and which is primary, then the operator
-log. If the operator has refused to promote, the log says so explicitly. That is a durability
-decision, not a failure: it means it cannot prove the surviving replica holds every acknowledged
-commit.
+log. If the operator has refused to promote, the log says so. That is a safety decision, not a bug:
+the operator cannot prove that the surviving replica holds every acknowledged commit.
 
 ### WAL archiving has stopped
 
@@ -203,8 +204,8 @@ Trends, rates and historical comparison are not available.
 
 There is no alerting. Every failure documented in this project was noticed by someone looking.
 
-External Secrets runs one replica with leader election disabled, so a reconcile that fails has no
-second instance to retry it.
+External Secrets runs one replica, so while that pod is down no secret is synchronised in either
+direction.
 
 The backup store exposes only a health endpoint, so its internal state, free space and object counts
 are visible only from the host.

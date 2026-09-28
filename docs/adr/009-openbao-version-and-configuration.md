@@ -32,10 +32,10 @@ consider it seriously.
 
 Given the requirement, the choice pays off in two ways. The database layer
 already has a tested recovery model: three CloudNativePG instances with
-synchronous replication and quorum failover, daily base backups, continuous WAL
-archiving to a store outside the cluster, full restore and point-in-time
-restore, all exercised during the PostgreSQL phase. OpenBao inherits that
-instead of adding a second persistence system with its own procedure. And the
+synchronous replication and quorum failover, daily base backups and continuous
+WAL archiving to a store outside the cluster. I tested full restore and
+point-in-time restore in the PostgreSQL phase. OpenBao gets all of that,
+instead of adding a second storage system with its own backup procedure. And the
 OpenBao pods hold no durable state: they need no volumes, and a pod can be
 deleted and recreated without touching the data. With Integrated Storage each
 server keeps an encrypted copy of the data on its own filesystem and replicates
@@ -54,9 +54,9 @@ includes the database's: during the disaster recovery rehearsal the OpenBao
 pods crashlooped while PostgreSQL was being restored, then unsealed themselves
 once it returned, with no human step. And with this backend the servers decide
 which one is active through a row in `openbao_ha_locks`, not through Raft. The
-active node renews that row every five seconds and it expires after fifteen
-(ADR-004), so leadership is only as good as the connection to the database, and
-that is why one connection is kept free for the renewal query. I did not
+active node renews that row every five seconds, and the row expires after
+fifteen (ADR-004). So leadership depends on the connection to the database,
+and that is why one connection is always kept free for the renewal query. I did not
 measure the latency the extra hop adds, so the performance side of this
 trade-off is reasoned rather than measured.
 
@@ -66,9 +66,9 @@ trade-off is reasoned rather than measured.
 - Chart 0.29.6 with the image overridden to 2.7.0. This brings GH-3913, which
   sets the PostgreSQL transaction limit below `max_parallel` so that HA lock
   renewal can always proceed, and `tls_auto_reload`, which reloads listener
-  certificates without SIGHUP. It also brings PostgreSQL standby reads, a
-  behaviour change in exactly the configuration I am running, on a release one
-  day old in a chart whose CI has not tested it.
+  certificates without SIGHUP. It also brings PostgreSQL standby reads, which
+  change how my exact configuration behaves. And 2.7.0 was one day old, and the
+  chart's CI had not tested it.
 - Staying on 2.6.2, which 2.6.3 replaces as a security release.
 
 ## Decision
@@ -83,12 +83,12 @@ audit volume, injector and CSI disabled, and the UI disabled both in the chart
 and in the server configuration, because the chart's flag only governs the UI
 Service. `global.tlsDisable` is false, since the listener terminates TLS.
 
-The chart's defaults are kept where they already match the design: a required
-pod anti-affinity on `kubernetes.io/hostname`, so one replica lands per worker;
-`podManagementPolicy: OrderedReady`, so the first start is serialised and only
-one instance runs the initialization; and `updateStrategyType: OnDelete`, so an
-upgrade replaces standbys before the active node rather than failing over to an
-older version.
+I keep three chart defaults because they already match the design. A required
+pod anti-affinity on `kubernetes.io/hostname` puts one replica on each worker.
+`podManagementPolicy: OrderedReady` starts the pods one after another, so only
+one of them runs the initialization. `updateStrategyType: OnDelete` lets me
+replace the standbys before the active node, so an upgrade does not fail over
+to an older version.
 
 Storage:
 
@@ -113,18 +113,18 @@ what GH-3913 does in 2.7.0.
 
 `max_connect_retries` defaults to 1. The backoff starts at 15 ms and is capped
 at 5 s, so a small number of retries is worth only a fraction of a second.
-Fifty gives roughly three minutes, enough to ride out a primary failover at
-start-up, while a database that is genuinely unreachable still ends in a
+Fifty retries give roughly three minutes. That is enough to survive a primary
+failover during start-up, and a database that is really down still ends in a
 visible crash loop.
 
-The connection is not configured with a URL. `connection_url` is left out, and
-the standard PostgreSQL environment variables are used instead: `PGHOST` is
-`openbao-db-rw.database.svc`, which is the service identity proven with a
-`verify-full` connection during the TLS phase, `PGSSLMODE` is `verify-full`,
-and `PGSSLROOTCERT` points at the `ca.crt` that cert-manager writes into
-OpenBao's own listener Secret. `PGUSER` and `PGPASSWORD` come from a copy of
-the SOPS-encrypted basic-auth Secret that the database namespace already holds,
-so the credential has the same shape in both namespaces and the password never
+I do not configure a connection URL. `connection_url` is left out, and OpenBao
+reads the standard PostgreSQL environment variables instead. `PGHOST` is
+`openbao-db-rw.database.svc`, the name I tested with a `verify-full`
+connection in the TLS phase. `PGSSLMODE` is `verify-full`. `PGSSLROOTCERT`
+points at the `ca.crt` that cert-manager writes into OpenBao's own listener
+Secret. `PGUSER` and `PGPASSWORD` come from a copy of the SOPS-encrypted
+basic-auth Secret that the database namespace already holds. So the
+credential has the same shape in both namespaces, and the password never
 appears inside a connection string.
 
 The listener binds `[::]:8200` and `[::]:8201` and uses a certificate issued by
@@ -139,9 +139,9 @@ and `server.ha.clusterAddr`, both to the pod's own name under
 file, so there is one source for each. They use `$(BAO_K8S_POD_NAME)` rather
 than `$(HOSTNAME)`: Kubernetes expands a reference only against variables
 defined earlier in the same environment list, and the chart defines `HOSTNAME`
-after `BAO_API_ADDR`. Setting `apiAddr` explicitly is required rather than
-cosmetic, because the chart otherwise advertises `https://$(POD_IP):8200` and
-an IP address is not a name on the certificate.
+after `BAO_API_ADDR`. Setting `apiAddr` is required, not optional: otherwise
+the chart advertises `https://$(POD_IP):8200`, and an IP address is not a name
+on the certificate.
 
 `service_registration "kubernetes" {}` is enabled, together with the chart's
 service discovery role and auth delegator role, which are set explicitly rather
@@ -177,6 +177,10 @@ the default level in a following commit.
   server.
 - Only the active node serves requests. Standby reads are not available on this
   backend in 2.6.x.
+- OpenBao removed `mlock` in 2.0.0 (GH-363). On this VM `swapon --show` prints
+  nothing, so OpenBao's memory cannot be written to swap on the host. This is a
+  host setting outside these manifests. Production would enforce and check an
+  equivalent swap control on every node that runs OpenBao.
 
 ## References
 

@@ -17,7 +17,7 @@ Current state:
 
 ## Recovery source and catalogue generations
 
-`serverName` names the directory a cluster's backups are written to and read from. It is part of choosing a recovery point rather than plumbing, and it is not the cluster's name.
+`serverName` names the directory in the bucket that a cluster writes its backups to and reads them from. It is not the cluster's name. Choosing it is part of choosing a recovery point.
 
 A recovered cluster must not archive into the generation it read from, because CloudNativePG refuses to archive into a destination that already holds another cluster's backups. Every recovery therefore opens a new generation. The store holds three:
 
@@ -35,7 +35,7 @@ Before restoring, decide which generation covers the point you want and list the
 
 With no `recoveryTarget`, recovery selects the newest base backup in that generation. That is why `openbao-db` cannot be restored from without pinning `recoveryTarget.backupID`: its newest base backup is the invalid one.
 
-The restore manifests were corrected on 25 September 2026 after a documentation audit. They had been written two days earlier against the only generation that existed then, and the rehearsal moved the active writer afterwards, so the full restore example would have selected the invalid base backup.
+The restore manifests were corrected on 25 September 2026 after a documentation audit. They were written two days earlier, when only one generation existed. The rehearsal later moved the active writer, so the full restore example would have picked the invalid base backup.
 
 The rule that produces these generations, and the rehearsal that produced these three, are in [Disaster recovery](disaster-recovery.md).
 
@@ -67,7 +67,7 @@ Remove it from Git in a following commit once it is Completed. Flux prunes the o
 
 A restore never changes the running cluster. It creates a new `Cluster` that bootstraps from the object store, reading the generation named by `serverName`. Templates are in `docs/restore/`, and both carry comments on how to choose the source.
 
-Confirm which generation and which base backup the template will use before committing it. `restore-full.yaml` reads the active generation and relies on newest-backup selection, which is only safe once you have listed what is there.
+Confirm which generation and which base backup the template will use before committing it. `restore-full.yaml` reads the active generation and takes its newest base backup, so list the base backups first.
 
 Full restore to the latest available point in the active generation:
 

@@ -60,7 +60,7 @@ Three different numbers apply, and they should not be confused.
 A rehearsed shutdown can lose nothing. Before the teardown a marker row was committed at
 12:15:08.239483+00, `pg_switch_wal()` closed segment `00000003000000010000002F`, and the archiver
 shipped it by 12:15:31, moving `archived_count` from 305 to 306. The gap was about 23 seconds and no
-committed data was lost. This is evidence of the rehearsal, not a worst case.
+committed data was lost. That shows the rehearsal went well; it is not the worst case.
 
 An unplanned loss is worse. `archive_timeout` is five minutes, so the open segment can hold up to
 five minutes of writes that have never reached the store. Those writes are lost with the cluster.
@@ -72,8 +72,8 @@ Synchronous replication with `dataDurability: required` means no acknowledged co
 the cluster. It does not shorten the archive lag, which is the number that matters once the cluster
 is gone.
 
-No clean recovery time has been measured. The rehearsal deliberately contained three failed recovery
-attempts, so its wall clock measures troubleshooting rather than the procedure. Two component timings
+No clean recovery time has been measured. The rehearsal included three failed recovery attempts, so
+its total time measures troubleshooting, not the procedure. Two component timings
 were observed: four nodes reached Ready about 35 seconds after `kind create cluster`, and OpenBao
 unsealed at 13:42:30 with `core: unsealed with stored key`, seconds after the database became
 available and with no human step.
@@ -161,8 +161,8 @@ command, which finds the secret and skips key generation.
     kubectl --context kind-openbao-local -n flux-system create secret generic sops-age \
         --from-file=age.agekey=$HOME/.config/sops/age/keys.txt
 
-Encrypted Kustomizations fail until this secret exists. That is a bootstrap dependency, not a race:
-decryption fails rather than something wrong being applied.
+Kustomizations with encrypted files fail until this Secret exists. That is expected and safe:
+decryption fails, so nothing wrong is applied.
 
 ### Step 9. Confirm what the Cluster was born from
 
@@ -172,11 +172,10 @@ Check the object.
     kubectl --context kind-openbao-local -n database get cluster openbao-db \
         -o jsonpath='{.metadata.creationTimestamp}{"\n"}{.spec.bootstrap}{"\n"}'
 
-If the Cluster was created with `initdb`, stop. Applying the recovery manifest cannot fix it, because
-`bootstrap` only applies when the object is created, so applying it to an object that already
-exists does nothing. The empty cluster will also have
+If the Cluster was created with `initdb`, stop. Applying the recovery manifest now cannot fix it,
+because `bootstrap` is read only when the object is created. The empty cluster will also have
 written a base backup into the source catalogue within seconds, so the next attempt must pin
-`recoveryTarget.backupID`. Remove the Cluster from Git, let Flux garbage-collect it, and start again
+`recoveryTarget.backupID`. Remove the Cluster from Git, let Flux delete it, and start again
 from step 5.
 
 ### Step 10. Wait for recovery and confirm archiving resumed
@@ -263,15 +262,15 @@ A Flux Kustomization's applied revision says what it last reconciled, not what a
 created from. On 25 September the `database` Kustomization created the Cluster at 12:50:37 from
 artifact `6c0cac4`, which still said `initdb`, and applied the recovery commit `ff8ba18` at 12:52:07.
 Because `bootstrap` only applies when the object is created, applying the recovery commit later did
-nothing, and the platform came up empty. Pushing the recovery commit before bootstrapping Flux removes the race. Comparing the
-object's `creationTimestamp` with the push time is what settles it afterwards.
+nothing, and the platform came up empty. Pushing the recovery commit before bootstrapping Flux
+removes the race. To check afterwards, compare the object's `creationTimestamp` with the push time.
 
 ### Creating a cluster is a backup event
 
 `ScheduledBackup` carries `immediate: true`, so it fires within seconds of a Cluster being created.
 The empty cluster from attempt 1 wrote base backup `20260925T125107` into the real `openbao-db`
-catalogue, and that is what broke attempt 2. Anything wrong about a cluster at birth reaches the
-catalogue immediately.
+catalogue, and that is what broke attempt 2. So whatever is wrong with a new cluster reaches the
+catalogue at once.
 
 ### The junk base backup is still the newest one in the `openbao-db` catalogue
 

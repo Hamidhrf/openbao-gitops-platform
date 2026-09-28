@@ -6,7 +6,7 @@ This deployment is not production-ready as a whole. It runs on one VM, and sever
 are simplified on purpose so that the platform can be shown end to end on a laptop-sized machine.
 
 The task asks which parts are production-ready and which are simplified for the demo. This
-document is that answer in one place. The reasoning behind each line is in the ADR named beside it.
+document gives that answer in one place. The reasoning behind each line is in the ADR named beside it.
 
 ## Parts that would carry over to production
 
@@ -39,10 +39,10 @@ OpenBao initializes itself and leaves nothing behind. No root token is returned 
 are created. Administration is a short-lived login through Kubernetes auth, and every request is
 written to the audit log (ADR-008).
 
-Secret isolation is enforced in OpenBao rather than in External Secrets. Policies are written per
-calling namespace, and roles bind the service account name, its namespace and the token audience. A
-namespace cannot read another namespace's path even though no policy mentions that other namespace.
-Pull and push use separate path prefixes, so a sync loop cannot form (ADR-010).
+Secret isolation is enforced in OpenBao rather than in External Secrets. Each policy is a template
+that is filled in with the caller's namespace, so every namespace reaches only its own path. Roles bind
+the ServiceAccount name, its namespace and the token audience. Pull and push use separate path
+prefixes, so a sync loop cannot form (ADR-010).
 
 Certificates are issued and renewed by cert-manager, and the database picks up a renewed certificate
 without a restart (ADR-007).
@@ -66,8 +66,8 @@ Versions are pinned. Charts by exact version, and every image chosen by this pro
 
 ## What I would change before production
 
-Some of these would happen at the same time in a real project. This is the order if only one could be
-done first.
+In a real project some of these would happen at the same time. They are listed in order of
+importance.
 
 1. Remove the single-host failure domain, and start with the backups. Today one disk failure takes
    Kubernetes, every database volume and the only copy of the backups in one event. Everything else on
