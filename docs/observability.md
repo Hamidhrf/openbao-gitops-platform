@@ -47,7 +47,8 @@ The Cluster's five conditions are the primary signal: `Initialized`, `Consistent
         -o jsonpath='{range .status.conditions[*]}{.type}={.status}{"\n"}{end}'
 
 Beyond those: the number of ready instances and which pod is primary, the count of synchronous
-standbys, the current timeline, and whether `last_archived_wal` is advancing.
+standbys, the current timeline, and whether `last_archived_wal` is advancing. Read the archiver
+statistics on the primary, which is `openbao-db-1` here:
 
     kubectl --context kind-openbao-local -n database exec openbao-db-1 -c postgres -- \
         psql -U postgres -d openbao -c "select last_archived_wal, archived_count, last_failed_wal, failed_count from pg_stat_archiver;"

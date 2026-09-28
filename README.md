@@ -79,7 +79,7 @@ To remove the cluster:
 Flux v2.9.5 is bootstrapped with `flux bootstrap git` over SSH (see ADR-003). The CLI pushes through an SSH agent holding a key that can push to this repository:
 
     eval "$(ssh-agent -s)"
-    ssh-add <key with push access>
+    ssh-add ~/.ssh/id_ed25519
     flux bootstrap git \
       --context=kind-openbao-local \
       --url=ssh://git@github.com/Hamidhrf/openbao-gitops-platform \
@@ -119,7 +119,7 @@ flowchart LR
   E --> F["apps<br/>demo workload"]
 ```
 
-Kustomizations are added as their directories gain content. Namespaces, chart sources and HelmReleases for a component live together in that component's namespace.
+Namespaces, chart sources and HelmReleases for a component live together in that component's namespace.
 
     flux get kustomizations --context kind-openbao-local
 
@@ -364,7 +364,7 @@ Observed on 25 September 2026 on this cluster.
 
 A new value written to OpenBao reached the workload's mounted file about 40 seconds later, with a one minute refresh interval on the `ExternalSecret`, and the pod kept its start time and zero restarts. Two intervals are involved: External Secrets rewrites the Secret on its refresh interval, and the kubelet then updates the mounted files on its own period. A Secret consumed as environment variables would not update at all until the pod restarts, which is why the demo mounts it as a directory.
 
-A `PushSecret` with `deletionPolicy: Delete` holds a finalizer. Deleting the `PushSecret`, or its source Secret, removes the secret in OpenBao, data and metadata together, before the finalizer clears. The value returns when Flux restores the `PushSecret`, as a new secret starting again at version 1 rather than an older version resurfacing. Deleting it by hand is corrected on the Kustomization's own interval of one hour, not on the one minute interval of the GitRepository, which only governs how quickly new commits are noticed.
+A `PushSecret` with `deletionPolicy: Delete` holds a finalizer. Deleting the `PushSecret` removes the secret in OpenBao, data and metadata together, before the finalizer clears. The value returns when Flux restores the `PushSecret`, as a new secret starting again at version 1 rather than an older version resurfacing. Deleting it by hand is corrected on the Kustomization's own interval of one hour, not on the one minute interval of the GitRepository, which only governs how quickly new commits are noticed.
 
 Secrets that External Secrets pushed carry the custom metadata `managed-by: external-secrets`. With `updatePolicy: Replace`, a secret without that marker is never overwritten, which is what protects operator-written paths.
 
@@ -380,7 +380,7 @@ The Job runs when its script changes, not continuously, so configuration changed
 
 Because the policies are rendered with an accessor discovered at run time, Git holds a template rather than the literal policy, so comparing Git with the live configuration cannot be a text comparison.
 
-A rebuild from Git restores the platform configuration, not the secrets an operator wrote: `secret/apps/demo/config` returns only from a database restore. The pushed certificate is different, because cert-manager generates a new one and External Secrets pushes it again, so what comes back there is a new credential rather than a recovered one.
+A rebuild from Git restores the platform configuration, not the secrets an operator wrote: `secret/apps/demo/config` returns only from a database restore. The pushed certificate is different. At first OpenBao returns the old certificate from the database. cert-manager issues a new one in the new cluster and External Secrets pushes it over the old one, so what stays in OpenBao is a new credential rather than a recovered one. In the rehearsal that took 23 minutes after OpenBao came back.
 
 ## Production readiness
 
@@ -392,7 +392,7 @@ The backup store runs on that same machine and disk, with no versioning and no o
 
 The seal key and the bootstrap credentials are long-lived and kept in Git under SOPS. Someone holding the age identity and a database backup has what is needed to read the data. Production would unseal from a KMS or an HSM instead.
 
-No monitoring stack is deployed. Every component exposes metrics, but nothing collects, stores or alerts on them.
+No monitoring stack is deployed. Every component inside the cluster exposes metrics, but nothing collects, stores or alerts on them.
 
 The full list, what production would do instead and what each simplification costs are in [Production readiness](docs/production-readiness.md). What would be monitored, what to alert on and how this platform was troubleshot are in [Observability](docs/observability.md).
 

@@ -5,16 +5,18 @@
 This deployment is not production-ready as a whole. It runs on one VM, and several production concerns
 are simplified on purpose so that the platform can be shown end to end on a laptop-sized machine.
 
-The challenge asks which parts are production-ready and which are simplified for the demo. This
+The task asks which parts are production-ready and which are simplified for the demo. This
 document is that answer in one place. The reasoning behind each line is in the ADR named beside it.
 
 ## Parts that would carry over to production
 
 These are design decisions, not demo shortcuts. They would look the same in a real deployment.
 
-Git is the only source of truth. Once Flux is running, everything in the cluster comes from a commit.
-The only steps done by hand are the two the challenge allows: bootstrapping Flux, and installing the
-age key that Flux needs before it can decrypt anything (ADR-002, ADR-003).
+Git is the only source of truth. Once Flux is running, every object in the cluster comes from a commit.
+The only objects created by hand belong to bootstrapping Flux: the bootstrap itself, and the Secret
+holding the age key that Flux needs before it can decrypt anything (ADR-002, ADR-003). A few steps
+outside the cluster are manual too: adding the deploy key on GitHub, starting the backup store on the
+VM, and writing secret values into OpenBao.
 
 The layers reconcile in order. Each Flux Kustomization waits for the one before it, so a controller and
 its CRDs are ready before the resources that use them (ADR-006).
@@ -31,7 +33,7 @@ docs/disaster-recovery.md).
 
 TLS is verified, not just enabled. OpenBao connects to PostgreSQL with `sslmode=verify-full`, so it
 checks the server's name and not only that a certificate exists. A connection by IP address is refused
-(ADR-007).
+(ADR-007). The database server itself does not yet reject clients that connect without TLS (ADR-004).
 
 OpenBao initializes itself and leaves nothing behind. No root token is returned and no recovery keys
 are created. Administration is a short-lived login through Kubernetes auth, and every request is
@@ -60,7 +62,7 @@ Versions are pinned. Charts by exact version, and every image chosen by this pro
 | Trust and certificates | One private CA for the database and OpenBao, with the CA read out of a leaf certificate's Secret, and no rollover ever tested | Separate intermediates, a trust bundle distributed on purpose, and a rehearsed root rollover | A root change would need a planned rollover this setup has never practised. Clients must be given the CA by hand, because it is not publicly trusted (ADR-007) |
 | Exposure | One NodePort mapped to `127.0.0.1` on the control-plane node | A load balancer or gateway in front of every node, a real DNS name, a certificate from a public issuer, and a network policy | If the control-plane container stops, the endpoint is gone even though OpenBao is healthy. After a node is killed the Service keeps selecting the dead server for about 50 seconds (ADR-011) |
 | Day-2 configuration and ESO | A Job that runs when its script changes; the ESO controller can read Secrets across the cluster | Continuous reconciliation, or a configuration controller with its own resources | Configuration changed by hand inside OpenBao stays changed until the next run. The controller's cluster-wide read of Secrets is how ESO works and is not narrowed here (ADR-010) |
-| Observability | Metrics are exposed by every component, but nothing collects, stores or alerts on them | Prometheus, alert rules, central logs, and probes from outside the cluster | Every problem in this project was found by someone looking. There is no history, so trends and rates are not available (docs/observability.md) |
+| Observability | Every component inside the cluster exposes metrics, but nothing collects, stores or alerts on them | Prometheus, alert rules, central logs, and probes from outside the cluster | Every problem in this project was found by someone looking. There is no history, so trends and rates are not available (docs/observability.md) |
 
 ## What I would change before production
 
@@ -78,13 +80,14 @@ done first.
    backup bucket.
 
 3. Give the platform real PKI and real exposure. Separate intermediates for the database and OpenBao,
-   a trust bundle distributed deliberately with a rehearsed rollover, a load balancer or gateway, a
-   name in DNS, a certificate from a public issuer, and a network policy limiting who can reach the
-   endpoint.
+   a trust bundle distributed deliberately with a rehearsed rollover, a database rule that rejects
+   password logins without TLS, a load balancer or gateway, a name in DNS, a certificate from a public
+   issuer, and a network policy limiting who can reach the endpoint.
 
 4. Deploy the observability plan before real traffic arrives. Metrics collection, the alerts in
    docs/observability.md, central log storage, and health probes from outside the cluster.
 
-5. Automate the lifecycle. Seal key and credential rotation, the certificate reload step that 2.6.x
-   still needs, restore tests on a schedule rather than by hand, and a periodic run of the day-2
-   configuration so that drift is corrected instead of waiting for someone to change the script.
+5. Automate the lifecycle. Upgrades, starting with CloudNativePG 1.30.1, seal key and credential
+   rotation, the certificate reload step that 2.6.x still needs, restore tests on a schedule rather
+   than by hand, and a periodic run of the day-2 configuration so that drift is corrected instead of
+   waiting for someone to change the script.

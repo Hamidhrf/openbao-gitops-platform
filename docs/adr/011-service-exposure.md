@@ -4,11 +4,11 @@ Status: accepted (2026-09-25)
 
 ## Context
 
-The challenge asks for TLS-enabled service exposure. So far OpenBao is reachable only from inside the cluster. An administrator on the VM cannot reach the API at all, and there is no external endpoint to show.
+The task asks for TLS-enabled service exposure. So far OpenBao is reachable only from inside the cluster. An administrator on the VM cannot reach the API at all, and there is no external endpoint to show.
 
 OpenBao terminates TLS itself with a certificate from the platform CA (ADR-007). It listens on 8200 for the API and on 8201 for the internal cluster port. The chart creates four Services, all ClusterIP: `openbao`, `openbao-active`, `openbao-standby` and the headless `openbao-internal`. Only the active server answers API requests. A standby redirects to the active server's `api_addr`, which is a name that only resolves inside the cluster.
 
-The cluster is kind, on one VM. Workloads run on the three workers and the control-plane node runs nothing else.
+The cluster is kind, on one VM. Workloads run on the three workers. The control-plane node runs only Kubernetes' own components, CoreDNS and the local-path provisioner.
 
 ## Options
 

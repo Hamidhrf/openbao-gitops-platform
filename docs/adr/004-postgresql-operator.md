@@ -1,6 +1,6 @@
 # ADR-004: PostgreSQL operator
 
-Status: accepted (2026-09-22). The TLS line is amended by ADR-007.
+Status: accepted (2026-09-22). The TLS line is amended by ADR-007. Two statements are corrected on 2026-09-29 and marked below.
 
 ## Context
 
@@ -45,7 +45,7 @@ TLS:
 
 - CloudNativePG's operator-generated CA. OpenBao connects to the `-rw` service with `sslmode=verify-full`.
 - OpenBao receives only `ca.crt`. The `<cluster>-ca` Secret also contains `ca.key`, and by default the same CA signs client certificates, so its holder can issue client certificates that PostgreSQL trusts. What such a certificate can reach still depends on `pg_hba.conf`, the certificate-to-user mapping and role privileges.
-- A `hostnossl` reject rule for OpenBao's database, because the default `pg_hba.conf` accepts password logins without TLS.
+- A `hostnossl` reject rule for OpenBao's database, because the default `pg_hba.conf` accepts password logins without TLS. Correction, 2026-09-29: I never added this rule to the Cluster manifest. OpenBao itself always connects with `sslmode=verify-full`, but the server still accepts a password login without TLS from other clients. The rule is on the list of changes before production in docs/production-readiness.md.
 
 Not decided here: whether PostgreSQL and OpenBao share a namespace, which is decided with the OpenBao and TLS designs, and OpenBao's own connection settings.
 
@@ -54,7 +54,8 @@ Not decided here: whether PostgreSQL and OpenBao share a namespace, which is dec
 - All nodes run on one VM (ADR-001). An instance failure is a pod or container failure on a shared disk, not an independent host failure.
 - local-path volumes give no storage-level redundancy and no snapshots. If a node is lost for good, its instance has to be recreated and cloned from the primary. With required anti-affinity and exactly three workers, that instance stays Pending until a worker is available again.
 - One control-plane node. CloudNativePG's failover depends on the Kubernetes API.
-- The Barman Cloud plugin is still 0.x, and CloudNativePG 1.30.0 has no patch release yet.
+- The Barman Cloud plugin is still 0.x.
+- CloudNativePG 1.30.0 had no patch release when I made this decision. Correction, 2026-09-29: 1.30.1 was released on 23 September 2026 with security and failover fixes. I stayed on 1.30.0 because every HA and recovery test in this repository ran on it. The upgrade comes before production.
 - Quorum failover prefers consistency over availability: with two of three instances gone, the cluster stops accepting writes instead of promoting.
 - Rotating OpenBao's database password means updating the SOPS Secret and restarting OpenBao, because environment variables from a Secret do not change in a running pod.
 - Anyone who can create workloads in the database's namespace can mount its Secrets, including `ca.key`, so the namespace boundary matters.

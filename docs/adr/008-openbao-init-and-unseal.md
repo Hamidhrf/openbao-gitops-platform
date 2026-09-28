@@ -1,6 +1,6 @@
 # ADR-008: OpenBao initialization, unseal and administrative access
 
-Status: accepted (2026-09-23)
+Status: accepted (2026-09-23). Amended by ADR-009, which moves the audit device out of the `initialize` stanza, and by ADR-010, which lets the day-2 Job use the admin ServiceAccount.
 
 ## Context
 
@@ -10,7 +10,7 @@ The default seal is Shamir, which splits an unseal key into shares and requires 
 
 The ESO spike on 21 September 2026 showed what a sealed OpenBao does to the rest of the platform. Logins return 503, existing Secrets keep their last value, ExternalSecrets fail on their next refresh, and syncing resumed about five minutes after unsealing without a manual nudge.
 
-The challenge requires that bootstrap secrets are not stored in OpenBao, to avoid a circular dependency, and are managed with GitOps or SOPS instead. ADR-002 already established SOPS with age for exactly that.
+The task requires that bootstrap secrets are not stored in OpenBao, to avoid a circular dependency, and are managed with GitOps or SOPS instead. ADR-002 already established SOPS with age for exactly that.
 
 ## Options
 

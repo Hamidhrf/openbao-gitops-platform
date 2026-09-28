@@ -1,6 +1,6 @@
 # ADR-006: Repository layout and namespaces
 
-Status: accepted (2026-09-22)
+Status: accepted (2026-09-22). Extended by ADR-007, which gives `infrastructure/configs/` its content, and by ADR-010, which adds External Secrets Operator to the controllers and the `openbao-config` Kustomization between `openbao` and `apps`.
 
 ## Context
 

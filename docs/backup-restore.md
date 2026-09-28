@@ -4,7 +4,7 @@ PostgreSQL runs as the CloudNativePG cluster `openbao-db` in the `database` name
 
 ## What is stored
 
-Base backups are taken daily at 02:00 UTC by the `ScheduledBackup` `openbao-db-daily`. Between them, the plugin sidecar in each instance pod ships WAL segments continuously. Both are compressed with gzip and stored in the bucket `pg-backups`, under the catalogue generation named by `serverName` in the cluster's plugin parameters. Retention is 7 days, set on the `ObjectStore`, which is a demo value.
+Base backups are taken daily at 02:00 UTC by the `ScheduledBackup` `openbao-db-daily`. Between them, the plugin sidecar on the primary ships WAL segments continuously. Both are compressed with gzip and stored in the bucket `pg-backups`, under the catalogue generation named by `serverName` in the cluster's plugin parameters. Retention is 7 days, set on the `ObjectStore`, which is a demo value.
 
 Kubernetes Secrets are not part of a backup. The database credential lives in Git, encrypted with SOPS, and is restored from there.
 
@@ -98,7 +98,7 @@ Serving traffic from a restored cluster is not part of this demo. It would mean 
 
 ## If the backup store is unavailable
 
-PostgreSQL keeps unshipped WAL segments on the primary's volume and retries. Writes continue. The cluster condition `ContinuousArchiving` turns False and `failed_count` in `pg_stat_archiver` rises:
+PostgreSQL keeps unshipped WAL segments on the primary's volume and retries. Writes continue. The cluster condition `ContinuousArchiving` turns False and `failed_count` in `pg_stat_archiver` rises on the primary, which is `openbao-db-1` here (the Cluster's `.status.currentPrimary` names it):
 
     kubectl --context kind-openbao-local exec -n database openbao-db-1 -c postgres -- psql -U postgres -At -c "select archived_count, failed_count, last_archived_wal, last_failed_wal from pg_stat_archiver"
 

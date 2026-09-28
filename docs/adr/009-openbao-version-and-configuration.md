@@ -10,7 +10,7 @@ administrative access. This decision covers the rest of the server: which
 version to run, how it reaches PostgreSQL, and which addresses it binds and
 advertises.
 
-The challenge requires the PostgreSQL backend and asks for the reasoning
+The task requires the PostgreSQL backend and asks for the reasoning
 against OpenBao's Integrated Storage, so that answer is recorded here as well.
 
 I ran a version gate on 24 September 2026, before pinning anything. OpenBao
@@ -21,7 +21,7 @@ and `ocikms` seals became plugin-only, so ADR-008 needs no change.
 
 ## Why PostgreSQL and not Integrated Storage
 
-The challenge requires it. That is the first reason and I do not want to
+The task requires it. That is the first reason and I do not want to
 present it as a free choice.
 
 OpenBao recommends Integrated Storage for most new deployments: no external
@@ -177,7 +177,6 @@ the default level in a following commit.
   server.
 - Only the active node serves requests. Standby reads are not available on this
   backend in 2.6.x.
-- Debug logging is used for one start only and is not the intended steady state.
 
 ## References
 
