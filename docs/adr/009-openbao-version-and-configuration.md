@@ -49,7 +49,7 @@ choice between a weaker and a stronger one. In 2.6.x, Integrated Storage
 supports standby reads and the PostgreSQL backend does not; that arrives for
 PostgreSQL in 2.7.0.
 
-Two of those costs are sharper than they look. OpenBao's availability now
+Two of those costs need more detail. OpenBao's availability now
 includes the database's: during the disaster recovery rehearsal the OpenBao
 pods crashlooped while PostgreSQL was being restored, then unsealed themselves
 once it returned, with no human step. And with this backend the servers decide
@@ -69,7 +69,7 @@ trade-off is reasoned rather than measured.
   certificates without SIGHUP. It also brings PostgreSQL standby reads, a
   behaviour change in exactly the configuration I am running, on a release one
   day old in a chart whose CI has not tested it.
-- Staying on 2.6.2, which 2.6.3 supersedes as a security release.
+- Staying on 2.6.2, which 2.6.3 replaces as a security release.
 
 ## Decision
 

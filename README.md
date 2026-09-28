@@ -319,7 +319,7 @@ The `eso-pull` and `eso-push` tokens have no default policy, so they cannot revo
 
 ### Limitations
 
-The External Secrets controller holds get, list, watch, create, update, delete and patch on Secrets across the cluster, because that is what it does for a living. The per-namespace token `Role` narrows which identities it can assume, not what it can read, so reading the CA out of the `openbao-tls` Secret avoids copying rather than establishing a boundary. The boundary that does hold is that the seal key and the certificate authority's private key are in namespaces no store references.
+The External Secrets controller holds get, list, watch, create, update, delete and patch on Secrets across the cluster, because that is the job it exists to do. The per-namespace token `Role` narrows which identities it can assume, not what it can read, so reading the CA out of the `openbao-tls` Secret avoids copying rather than establishing a boundary. The boundary that does hold is that the seal key and the certificate authority's private key are in namespaces no store references.
 
 Creating a `PushSecret` is a privileged action: anyone who can create one in an allowed namespace can have the controller read a Secret there and write it into OpenBao. These objects stay in Git, and the permission to create them is not given to application users.
 

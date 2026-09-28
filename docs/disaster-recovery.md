@@ -20,7 +20,7 @@ Every result stated here was observed on this platform. The full-loss procedure 
 
 ## 2. Recovery inputs
 
-Recovery needs three inputs. Each one is load-bearing.
+Recovery needs three inputs. None of them is optional.
 
 | Input | Where it lives | What is lost without it |
 |---|---|---|
@@ -114,11 +114,13 @@ without recreating anything.
 
 ### Step 5. Commit the recovery configuration before Flux exists
 
-In `platform/database/cluster.yaml`, replace `bootstrap.initdb` with `bootstrap.recovery`, add the
-`externalClusters` entry whose plugin parameters name the catalogue being recovered from, pin
-`recoveryTarget.backupID` to a known-good base backup, and set the `serverName` in the Cluster's own
-`plugins` parameters to the new generation from step 2. Commit and push before bootstrapping Flux, so
-that the recovery commit is already the artifact when the Cluster is created.
+In `platform/database/cluster.yaml`, make four changes. Replace `bootstrap.initdb` with
+`bootstrap.recovery`. Add the `externalClusters` entry whose plugin parameters name the catalogue
+being recovered from. Pin `recoveryTarget.backupID` to a known-good base backup. Set the `serverName`
+in the Cluster's own `plugins` parameters to the new generation from step 2.
+
+Commit and push before bootstrapping Flux, so that the recovery commit is already the artifact when
+the Cluster is created.
 
 ### Step 6. Bootstrap Flux
 
@@ -163,7 +165,8 @@ Check the object.
         -o jsonpath='{.metadata.creationTimestamp}{"\n"}{.spec.bootstrap}{"\n"}'
 
 If the Cluster was created with `initdb`, stop. Applying the recovery manifest cannot fix it, because
-`bootstrap` is creation-time and lands inert on a live object. The empty cluster will also have
+`bootstrap` only applies when the object is created, so applying it to an object that already
+exists does nothing. The empty cluster will also have
 written a base backup into the source catalogue within seconds, so the next attempt must pin
 `recoveryTarget.backupID`. Remove the Cluster from Git, let Flux garbage-collect it, and start again
 from step 5.
@@ -184,7 +187,7 @@ produced base backup `20260925T140024`, completed at 14:00:31.
 ### Step 12. Return the Cluster to `initdb`
 
 Commit `bootstrap.initdb` again, keeping the new writer `serverName`, so the repository does not
-describe a permanent recovery. This is inert on the running cluster: after the rehearsal the Cluster
+describe a permanent recovery. This changes nothing on the running cluster: after the rehearsal the Cluster
 UID, all three pod UIDs and the restart counts were unchanged and all five conditions stayed True.
 
 ### Step 13. Verify
@@ -245,8 +248,8 @@ successfully at 13:41:27. Judge archiving by `ContinuousArchiving` and `last_arc
 A Flux Kustomization's applied revision says what it last reconciled, not what a given object was
 created from. On 25 September the `database` Kustomization created the Cluster at 12:50:37 from
 artifact `6c0cac4`, which still said `initdb`, and applied the recovery commit `ff8ba18` at 12:52:07.
-Because `bootstrap` is creation-time, the later apply landed inert on a live object and the platform
-came up empty. Pushing the recovery commit before bootstrapping Flux removes the race. Comparing the
+Because `bootstrap` only applies when the object is created, applying the recovery commit later did
+nothing, and the platform came up empty. Pushing the recovery commit before bootstrapping Flux removes the race. Comparing the
 object's `creationTimestamp` with the push time is what settles it afterwards.
 
 ### Creating a cluster is a backup event

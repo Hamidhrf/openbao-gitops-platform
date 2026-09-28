@@ -5,9 +5,9 @@
 No monitoring backend is deployed. There is no Prometheus, no Grafana, no alert manager and no log
 store. That is a demo simplification, not a statement that these signals do not matter.
 
-What this document contains: an inventory of what the platform exposes today, measured rather than
-assumed; the signals production would collect; the conditions worth alerting on, each with the reason
-the obvious version of that alert is wrong; and the troubleshooting routes that were actually used to
+This document has four parts. An inventory of what the platform exposes today, measured rather than
+assumed. The signals production would collect. The conditions worth alerting on, each with the reason
+the obvious version of that alert is wrong. And the troubleshooting routes that were actually used to
 run and debug this platform, including during its failure tests.
 
 Measurements are from 26 September 2026 on the running cluster unless another date is given.
@@ -28,13 +28,13 @@ Measurements are from 26 September 2026 on the running cluster unless another da
 Nothing scrapes any of these. Every number in this repository was read from an object's status, from a
 log, or from a one-off query.
 
-OpenBao is the awkward one. Its metrics are served by the API listener, so a scrape needs the platform
+OpenBao is the harder one to scrape. Its metrics are served by the API listener, so a scrape needs the platform
 CA, a token with a policy that allows the path, and a route to the active node. Production would give
 the collector its own identity for that rather than reusing an administrative token.
 
-Production would add a Prometheus with a `PodMonitor` for the PostgreSQL instances, scrape
-configuration for the four controller endpoints above, a blackbox probe for the backup store and for
-the external OpenBao endpoint, and centralised collection of the container logs listed in section 6.
+Production would add a Prometheus that scrapes the PostgreSQL instances through a `PodMonitor` and
+the four controller endpoints above directly. It would also probe the backup store and the external
+OpenBao endpoint from outside, and collect the container logs listed in section 6.
 
 ## 3. Signals by component
 
@@ -175,8 +175,8 @@ new generation starts with no base backup.
 ### Flux reports Ready but the object is wrong
 
 Compare the object's `creationTimestamp` with the time the intended commit was pushed. Fields that
-only apply at creation, such as a Cluster's `bootstrap` section, land inert on an object that already
-exists, so a Kustomization can be Ready and correct while the object it created is not.
+only apply at creation, such as a Cluster's `bootstrap` section, have no effect on an object that
+already exists, so a Kustomization can be Ready and correct while the object it created is not.
 
 ## 6. Logs
 
