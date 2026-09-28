@@ -8,6 +8,37 @@ It runs on a local kind cluster with one control-plane node and three workers.
 
 Saved command output backing the claims below is in [Evidence](docs/evidence/). Which parts are production-ready and which are simplified for this demo is in [Production readiness](docs/production-readiness.md).
 
+## Architecture
+
+```mermaid
+flowchart LR
+  GIT[("Git repository<br/>manifests, secrets encrypted with SOPS")]
+  FLUX["Flux<br/>flux-system"]
+  CM["cert-manager<br/>platform CA"]
+  PG[("PostgreSQL x3<br/>database")]
+  OB["OpenBao x3<br/>openbao"]
+  ESO["External Secrets<br/>external-secrets"]
+  APP["demo workload<br/>demo"]
+  BS[("backup store<br/>container on the VM, outside Kubernetes")]
+
+  GIT -- "cloned every 60s" --> FLUX
+  FLUX -- "applies everything" --> CM
+  FLUX --> PG
+  FLUX --> OB
+  FLUX --> ESO
+  FLUX --> APP
+  CM -. "issues certificates" .-> PG
+  CM -. "issues certificates" .-> OB
+  OB -- "all state, sslmode=verify-full" --> PG
+  PG -- "base backups and WAL" --> BS
+  ESO -- "pull and push" --> OB
+  ESO -- "writes a Secret" --> APP
+```
+
+Everything except the backup store lives inside the kind cluster. That separation is what lets the
+cluster be deleted and rebuilt from Git and the backups, which is the rehearsal in
+[Disaster recovery](docs/disaster-recovery.md).
+
 ## Versions
 
 | Tool | Version |
@@ -78,6 +109,15 @@ Check:
 `clusters/local/` holds one Flux Kustomization per file, next to the generated `flux-system` directory. `infrastructure/controllers/` holds the operators, `infrastructure/configs/` the cluster-wide configuration they consume, `platform/` the services this repository delivers, and `apps/` the workloads that consume them. Each Kustomization depends on the previous one and waits for it, which is what registers CRDs before the resources that use them (see ADR-006):
 
     infra-controllers -> infra-configs -> database -> openbao -> openbao-config -> apps
+
+```mermaid
+flowchart LR
+  A["infra-controllers<br/>cert-manager, CloudNativePG, ESO"] --> B["infra-configs<br/>the platform CA"]
+  B --> C["database<br/>Cluster, ObjectStore, ScheduledBackup"]
+  C --> D["openbao<br/>servers, certificate, node port"]
+  D --> E["openbao-config<br/>day-2 Job, the two stores"]
+  E --> F["apps<br/>demo workload"]
+```
 
 Kustomizations are added as their directories gain content. Namespaces, chart sources and HelmReleases for a component live together in that component's namespace.
 
@@ -244,6 +284,19 @@ The listener certificate is valid for 90 days and renews at about day 60. Versio
 ## External Secrets
 
 External Secrets Operator runs in the `external-secrets` namespace, installed by a Flux `HelmRelease` in the controllers layer. It moves secrets in both directions: OpenBao to Kubernetes with an `ExternalSecret`, and Kubernetes to OpenBao with a `PushSecret` (see ADR-010). Push is available only through the HashiCorp Vault provider; the dedicated OpenBao provider is read-only.
+
+```mermaid
+flowchart LR
+  ADM["administrator"] -- "writes" --> P1[("secret/apps/demo/")]
+  P1 -- "ExternalSecret, every 60s" --> S1["Secret demo-config"]
+  S1 -- "mounted as files" --> POD["demo pod"]
+  CM["cert-manager"] -- "issues" --> S2["Secret demo-client-tls"]
+  S2 -- "PushSecret" --> P2[("secret/pushed/demo/")]
+```
+
+No path is both the source of a pull and the destination of a push, so a synchronisation loop
+cannot form. The two prefixes also record who owns each value: OpenBao owns what is under `apps/`,
+and the namespace owns what it sends to `pushed/`.
 
 Two chart defaults are changed. `rbac.serviceAccountTokenCreate` is false, so the controller holds no cluster-wide permission to create tokens for arbitrary ServiceAccounts, and each consuming namespace grants that for named ServiceAccounts instead. The cluster-scoped kinds this platform does not use are not installed and their reconcilers are off, which also removes the controller's `update` and `patch` permission on namespaces.
 
