@@ -9,7 +9,8 @@ here proves one thing the platform claims, and the last column says where that c
 No secret value appears in any of these files. OpenBao's audit log replaces every value with an HMAC,
 so audit lines show which path was touched and by which identity, never what was stored.
 
-The numbers follow the order of the platform, not the order in which the work was done.
+The numbers follow the order of the platform, not the order in which the work was done. The last
+file is the exception: it covers the whole cluster rather than one component.
 
 | File | What it shows | Explained in |
 |---|---|---|
@@ -26,6 +27,7 @@ The numbers follow the order of the platform, not the order in which the work wa
 | `11-tls-external.txt` | The API answering over TLS through the host port, with the platform CA, and two negative controls: without the CA, and by IP address | ADR-007, ADR-011, README |
 | `12-dr-recovery-verified.txt` | After the cluster was deleted and rebuilt: the marker row survived, archiving resumed on a new catalogue generation, and all three generations are listed | docs/disaster-recovery.md |
 | `13-dr-openbao-identity.txt` | The same OpenBao came back: same cluster ID, same KV mount, same Kubernetes auth accessor, and a pulled secret with its original timestamps | docs/disaster-recovery.md |
+| `14-metrics-exposed.txt` | Every component's metrics port, the PostgreSQL exporter answering with 117 metric families, and the API refusing to list PodMonitors because no Prometheus operator is installed | docs/observability.md |
 
 Two files are worth reading together. `12` and `13` are the answer to what a recovery actually returns:
 data comes back from the database with its original timestamps, while credentials the platform
